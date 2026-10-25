@@ -17,6 +17,8 @@ import android.view.MotionEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
+import android.view.ViewConfiguration;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.view.inputmethod.InputMethodManager;
@@ -113,8 +115,11 @@ public class ExplorerFragment extends Fragment {
     private String currentSearchQuery = "";
     private VideoListFilter.SortOrder currentSortOrder = VideoListFilter.SortOrder.DATE_DESC;
     private TextView tabRegularVideos, tabShortVideos;
+    private View layoutTabsContainer, viewTabIndicator, layoutTabButtons, cardVideoTabs;
+    private float currentTabProgress = 0.0f;
+    private ValueAnimator tabPillAnimator;
+    private final android.animation.ArgbEvaluator argbEvaluator = new android.animation.ArgbEvaluator();
     private boolean isShortsTabSelected = false;
-    private GestureDetector tabSwipeGestureDetector;
     private boolean isPlaylistCreationMode = false;
     private boolean isGridViewMode = false;
 
@@ -234,6 +239,10 @@ public class ExplorerFragment extends Fragment {
 
         tabRegularVideos = view.findViewById(R.id.tabRegularVideos);
         tabShortVideos = view.findViewById(R.id.tabShortVideos);
+        layoutTabsContainer = view.findViewById(R.id.layoutTabsContainer);
+        viewTabIndicator = view.findViewById(R.id.viewTabIndicator);
+        layoutTabButtons = view.findViewById(R.id.layoutTabButtons);
+        cardVideoTabs = view.findViewById(R.id.cardVideoTabs);
         etSearchVideos = view.findViewById(R.id.etSearchVideos);
         btnSort = view.findViewById(R.id.btnSort);
         btnCreatePlaylist = view.findViewById(R.id.btnCreatePlaylist);
@@ -267,7 +276,7 @@ public class ExplorerFragment extends Fragment {
 
         setupRecyclerViews();
         setupListeners();
-        setupSwipeGestureDetector();
+        setupTabDragListener();
         loadAndDisplayLastPlayedVideo();
 
         if (hasStoragePermission()) {
@@ -298,7 +307,7 @@ public class ExplorerFragment extends Fragment {
                 : (int) (64 * density);
         int totalBottomPadding = targetBottomMargin + bottomControlsHeight + (int) (16 * density);
 
-        int horizontalPadding = isGridViewMode ? (int) (9 * density) : 0;
+        int horizontalPadding = (isGridViewMode || isShortsTabSelected) ? (int) (9 * density) : 0;
         rvVideos.setPadding(horizontalPadding, totalTopPadding, horizontalPadding, totalBottomPadding);
         rvVideos.setClipToPadding(false);
         rvVideos.setClipChildren(false);
@@ -456,20 +465,14 @@ public class ExplorerFragment extends Fragment {
     }
 
     private void setupListeners() {
-        if (tabRegularVideos != null) {
-            tabRegularVideos.setOnClickListener(v -> {
-                if (isShortsTabSelected) {
-                    selectTabWithAnimation(false, true);
-                }
+        if (layoutTabsContainer != null) {
+            layoutTabsContainer.post(() -> updateTabIndicator(isShortsTabSelected ? 1.0f : 0.0f));
+            layoutTabsContainer.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                updateTabIndicator(isShortsTabSelected ? 1.0f : 0.0f);
             });
         }
-        if (tabShortVideos != null) {
-            tabShortVideos.setOnClickListener(v -> {
-                if (!isShortsTabSelected) {
-                    selectTabWithAnimation(true, false);
-                }
-            });
-        }
+
+
 
         if (btnSort != null) {
             btnSort.setOnClickListener(this::showSortMenu);
@@ -591,124 +594,188 @@ public class ExplorerFragment extends Fragment {
         animator.start();
     }
 
-    private void setupSwipeGestureDetector() {
-        if (getContext() == null) return;
-        tabSwipeGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
-            private static final int SWIPE_MIN_DISTANCE = 70;
-            private static final int SWIPE_THRESHOLD_VELOCITY = 80;
+    private void updateTabIndicator(float progress) {
+        this.currentTabProgress = Math.max(0.0f, Math.min(1.0f, progress));
+        if (tabRegularVideos == null || tabShortVideos == null || viewTabIndicator == null) return;
 
-            @Override
-            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                if (e1 == null || e2 == null) return false;
-                float diffY = e2.getY() - e1.getY();
-                float diffX = e2.getX() - e1.getX();
+        int w0 = tabRegularVideos.getWidth();
+        int w1 = tabShortVideos.getWidth();
 
-                if (Math.abs(diffX) > Math.abs(diffY) * 1.2f) {
-                    if (Math.abs(diffX) > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
-                        if (diffX < 0) {
-                            // Drag / Swipe Left -> Switch to "Короткие" tab
-                            if (!isShortsTabSelected) {
-                                selectTabWithAnimation(true, false);
-                                return true;
-                            }
-                        } else {
-                            // Drag / Swipe Right -> Switch to "Обычные" tab
-                            if (isShortsTabSelected) {
-                                selectTabWithAnimation(false, true);
-                                return true;
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-        });
+        if (w0 == 0 || w1 == 0) return;
 
-        if (rvVideos != null) {
-            rvVideos.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
-                @Override
-                public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                    if (tabSwipeGestureDetector != null) {
-                        tabSwipeGestureDetector.onTouchEvent(e);
-                    }
-                    return false;
-                }
-            });
+        int containerLeft = layoutTabButtons != null ? layoutTabButtons.getLeft() : 0;
+        float left0 = containerLeft + tabRegularVideos.getLeft();
+        float left1 = containerLeft + tabShortVideos.getLeft();
+
+        float targetWidth = w0 + currentTabProgress * (w1 - w0);
+        float targetX = left0 + currentTabProgress * (left1 - left0);
+
+        ViewGroup.LayoutParams lp = viewTabIndicator.getLayoutParams();
+        if (lp != null && lp.width != (int) targetWidth) {
+            lp.width = (int) targetWidth;
+            viewTabIndicator.setLayoutParams(lp);
         }
+        viewTabIndicator.setX(targetX);
 
-        if (swipeRefreshLayout != null) {
-            swipeRefreshLayout.setOnTouchListener((v, event) -> {
-                if (tabSwipeGestureDetector != null) {
-                    return tabSwipeGestureDetector.onTouchEvent(event);
-                }
-                return false;
-            });
-        }
+        if (isAdded() && getContext() != null) {
+            int whiteColor = ContextCompat.getColor(requireContext(), R.color.white_color);
+            int inactiveColor = ContextCompat.getColor(requireContext(), R.color.player_item_inactive_text);
 
-        if (layoutEmptyState != null) {
-            layoutEmptyState.setOnTouchListener((v, event) -> {
-                if (tabSwipeGestureDetector != null) {
-                    return tabSwipeGestureDetector.onTouchEvent(event);
-                }
-                return false;
-            });
+            int regularTextColor = (Integer) argbEvaluator.evaluate(currentTabProgress, whiteColor, inactiveColor);
+            int shortsTextColor = (Integer) argbEvaluator.evaluate(currentTabProgress, inactiveColor, whiteColor);
+
+            tabRegularVideos.setTextColor(regularTextColor);
+            tabShortVideos.setTextColor(shortsTextColor);
         }
     }
 
-    private void selectTabWithAnimation(boolean isShorts, boolean isFromLeftToRight) {
-        if (this.isShortsTabSelected == isShorts) return;
+    private void animateTabPill(boolean toShorts, @Nullable Runnable onEnd) {
+        float start = currentTabProgress;
+        float target = toShorts ? 1.0f : 0.0f;
 
-        View targetView = (rvVideos != null && rvVideos.getVisibility() == View.VISIBLE) ? rvVideos : layoutEmptyState;
-        if (targetView != null && isAdded()) {
-            float translationX = isFromLeftToRight ? -220f : 220f;
-
-            targetView.animate()
-                    .translationX(-translationX)
-                    .alpha(0.0f)
-                    .setDuration(120)
-                    .withEndAction(() -> {
-                        selectTab(isShorts);
-                        View newTargetView = (rvVideos != null && rvVideos.getVisibility() == View.VISIBLE) ? rvVideos : layoutEmptyState;
-                        if (newTargetView != null) {
-                            newTargetView.setTranslationX(translationX);
-                            newTargetView.setAlpha(0.0f);
-                            newTargetView.animate()
-                                    .translationX(0f)
-                                    .alpha(1.0f)
-                                    .setDuration(160)
-                                    .start();
-                        }
-                    })
-                    .start();
-        } else {
-            selectTab(isShorts);
+        if (tabPillAnimator != null && tabPillAnimator.isRunning()) {
+            tabPillAnimator.cancel();
         }
+
+        if (Math.abs(start - target) < 0.01f) {
+            updateTabIndicator(target);
+            if (onEnd != null) onEnd.run();
+            return;
+        }
+
+        tabPillAnimator = ValueAnimator.ofFloat(start, target);
+        tabPillAnimator.setDuration(220);
+        tabPillAnimator.setInterpolator(new DecelerateInterpolator(1.8f));
+        tabPillAnimator.addUpdateListener(anim -> {
+            float val = (Float) anim.getAnimatedValue();
+            updateTabIndicator(val);
+        });
+        tabPillAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                updateTabIndicator(target);
+                if (onEnd != null) onEnd.run();
+            }
+        });
+        tabPillAnimator.start();
+    }
+
+    private void setupTabDragListener() {
+        if (layoutTabsContainer == null) return;
+
+        View.OnTouchListener tabTouchListener = new View.OnTouchListener() {
+            private float downX = 0f;
+            private float downY = 0f;
+            private float initialProgress = 0f;
+            private boolean isDragging = false;
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        downX = event.getRawX();
+                        downY = event.getRawY();
+                        initialProgress = currentTabProgress;
+                        isDragging = false;
+
+                        // Immediately request all parent views to disallow intercepting touch events
+                        ViewParent parent = v.getParent();
+                        while (parent != null) {
+                            parent.requestDisallowInterceptTouchEvent(true);
+                            parent = parent.getParent();
+                        }
+
+                        if (tabPillAnimator != null && tabPillAnimator.isRunning()) {
+                            tabPillAnimator.cancel();
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_MOVE:
+                        float dx = event.getRawX() - downX;
+                        float dy = event.getRawY() - downY;
+                        int touchSlop = android.view.ViewConfiguration.get(v.getContext()).getScaledTouchSlop();
+
+                        if (!isDragging) {
+                            if (Math.abs(dx) > touchSlop && Math.abs(dx) > Math.abs(dy)) {
+                                isDragging = true;
+                            }
+                        }
+
+                        if (isDragging) {
+                            ViewParent p = v.getParent();
+                            while (p != null) {
+                                p.requestDisallowInterceptTouchEvent(true);
+                                p = p.getParent();
+                            }
+
+                            float distanceBetweenTabs = 0f;
+                            if (tabShortVideos != null && tabRegularVideos != null) {
+                                distanceBetweenTabs = tabShortVideos.getLeft() - tabRegularVideos.getLeft();
+                            }
+                            if (distanceBetweenTabs <= 0 && tabRegularVideos != null && tabRegularVideos.getWidth() > 0) {
+                                distanceBetweenTabs = tabRegularVideos.getWidth();
+                            }
+                            if (distanceBetweenTabs <= 0) {
+                                distanceBetweenTabs = 120f;
+                            }
+
+                            float deltaProgress = dx / distanceBetweenTabs;
+                            float newProgress = Math.max(0.0f, Math.min(1.0f, initialProgress + deltaProgress));
+                            updateTabIndicator(newProgress);
+                        }
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        if (!isDragging) {
+                            boolean targetShorts;
+                            if (v == tabShortVideos) {
+                                targetShorts = true;
+                            } else if (v == tabRegularVideos) {
+                                targetShorts = false;
+                            } else {
+                                int[] location = new int[2];
+                                if (tabShortVideos != null) {
+                                    tabShortVideos.getLocationOnScreen(location);
+                                    targetShorts = event.getRawX() >= location[0];
+                                } else {
+                                    targetShorts = !isShortsTabSelected;
+                                }
+                            }
+                            selectTabWithAnimation(targetShorts);
+                        } else {
+                            float dxFinal = event.getRawX() - downX;
+                            boolean targetShorts;
+                            if (dxFinal > 20f) {
+                                targetShorts = true;
+                            } else if (dxFinal < -20f) {
+                                targetShorts = false;
+                            } else {
+                                targetShorts = currentTabProgress >= 0.5f;
+                            }
+                            selectTabWithAnimation(targetShorts);
+                        }
+                        isDragging = false;
+                        return true;
+                }
+                return false;
+            }
+        };
+
+        layoutTabsContainer.setOnTouchListener(tabTouchListener);
+        if (cardVideoTabs != null) cardVideoTabs.setOnTouchListener(tabTouchListener);
+        if (tabRegularVideos != null) tabRegularVideos.setOnTouchListener(tabTouchListener);
+        if (tabShortVideos != null) tabShortVideos.setOnTouchListener(tabTouchListener);
+    }
+
+    private void selectTabWithAnimation(boolean targetShorts) {
+        animateTabPill(targetShorts, () -> selectTab(targetShorts));
     }
 
     private void selectTab(boolean isShorts) {
-        if (this.isShortsTabSelected == isShorts) return;
         this.isShortsTabSelected = isShorts;
-
-        if (isAdded() && getContext() != null) {
-            if (isShorts) {
-                if (tabRegularVideos != null) {
-                    tabRegularVideos.setBackgroundResource(R.drawable.bg_tab_pill_unselected);
-                    tabRegularVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.player_item_inactive_text));
-                }
-                if (tabShortVideos != null) {
-                    tabShortVideos.setBackgroundResource(R.drawable.bg_tab_pill_selected);
-                    tabShortVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_color));
-                }
-            } else {
-                if (tabRegularVideos != null) {
-                    tabRegularVideos.setBackgroundResource(R.drawable.bg_tab_pill_selected);
-                    tabRegularVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_color));
-                }
-                if (tabShortVideos != null) {
-                    tabShortVideos.setBackgroundResource(R.drawable.bg_tab_pill_unselected);
-                    tabShortVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.player_item_inactive_text));
-                }
-            }
+        if (layoutTabsContainer != null) {
+            layoutTabsContainer.post(() -> updateTabIndicator(isShorts ? 1.0f : 0.0f));
         }
 
         if (allVideos != null) {

@@ -235,6 +235,18 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             DateHeaderViewHolder holder = (DateHeaderViewHolder) rawHolder;
             holder.tvDateHeaderTitle.setText(header.title);
             holder.tvDateHeaderCount.setText(header.count + " видео");
+
+            boolean isGridFormat = isGridView || isShortsTab;
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) holder.itemView.getLayoutParams();
+            if (lp != null) {
+                float density = holder.itemView.getContext().getResources().getDisplayMetrics().density;
+                int targetMargin = isGridFormat ? (int) (3 * density) : (int) (12 * density);
+                if (lp.leftMargin != targetMargin || lp.rightMargin != targetMargin) {
+                    lp.leftMargin = targetMargin;
+                    lp.rightMargin = targetMargin;
+                    holder.itemView.setLayoutParams(lp);
+                }
+            }
             return;
         }
 
