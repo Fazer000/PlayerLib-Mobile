@@ -44,7 +44,7 @@
 
         <!-- Status Bar -->
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
 
         <!-- Global font family -->
         <item name="android:fontFamily">@font/open_sans</item>
@@ -60,12 +60,14 @@
     </style>
 
     <style name="SplashScreenTheme" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/lt_header_color</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/animelib_logo_light</item>
-        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item> <!-- Цвет круга behind иконки -->
+        <item name="windowSplashScreenBackground">#1C1C1E</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenIconBackgroundColor">@android:color/transparent</item>
         <item name="postSplashScreenTheme">@style/Theme.AnimeLIB</item>
-        <item name="android:statusBarColor">@color/lt_header_color</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#1C1C1E</item>
+        <item name="android:navigationBarColor">#1C1C1E</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 
     <style name="SplashScreenTheme.WebView" parent="SplashScreenTheme">
@@ -76,13 +78,13 @@
         <item name="statusBarColor">@color/lt_webview_status_bar_color</item>
         <item name="android:statusBarColor">@color/lt_webview_status_bar_color</item>
         <item name="android:windowBackground">@color/lt_webview_status_bar_color</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="Theme.AnimeLIB.HeaderBar" parent="Theme.AnimeLIB">
         <item name="statusBarColor">@color/toolbar_header_bg</item>
         <item name="android:statusBarColor">@color/toolbar_header_bg</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="CustomSpinnerShapeAppearance" parent="ShapeAppearance.MaterialComponents.SmallComponent">

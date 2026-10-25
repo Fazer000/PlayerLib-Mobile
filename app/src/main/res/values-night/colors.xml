@@ -31,22 +31,22 @@
     <color name="purple_alpha_10">@color/accent_color_alpha_10</color>
     <color name="purple_alpha_25">@color/accent_color_alpha_25</color>
 
-    <color name="dt_primary_color">#131316</color>
-    <color name="dt_header_color">#131316</color>
-    <color name="dt_card_background">#1C1C1E</color>
-    <color name="dt_player_item_background">#1C1C1E</color>
+    <color name="dt_primary_color">#1C1C1E</color>
+    <color name="dt_header_color">#1C1C1E</color>
+    <color name="dt_card_background">#252528</color>
+    <color name="dt_player_item_background">#252528</color>
     <color name="dt_related_panel_background">#1C1C1E</color>
-    <color name="dt_bookmark_card_bg">#1C1C1E</color>
+    <color name="dt_bookmark_card_bg">#252528</color>
     <!-- Unified Text Colors (Dark Mode Overrides) -->
-    <color name="app_text_primary">#BFBFBF</color>
-    <color name="app_text_secondary">#8A8A8E</color>
+    <color name="app_text_primary">#FFFFFF</color>
+    <color name="app_text_secondary">#9CA3AF</color>
     <color name="app_text_brand_button">@color/accent_color</color>
     <color name="app_text_accent_blue">#79A5D8</color>
 
     <!-- Semantic Theme Colors (Dark Override) -->
     <color name="resize_card_selected_bg">@color/accent_secondary_dark</color>
     <color name="resize_card_selected_stroke">@color/accent_color</color>
-    <color name="resize_card_unselected_bg">#1C1C1E</color>
+    <color name="resize_card_unselected_bg">#252528</color>
     <color name="resize_card_unselected_stroke">#33333C</color>
     <color name="resize_preview_inner_bg">#2A323D</color>
 
@@ -54,20 +54,20 @@
     <color name="switch_thumb_unchecked">#FFFFFF</color>
     <color name="switch_track_outline_unchecked">#938F96</color>
     <color name="toolbar_header_bg">@color/dt_header_color</color>
-    <color name="bs_bg_color">#131316</color>
+    <color name="bs_bg_color">#1C1C1E</color>
     <color name="bs_divider_color">#2D2D36</color>
-    <color name="card_bg_color">#1C1C1E</color>
-    <color name="primary_text_color">#BFBFBF</color>
-    <color name="secondary_text_color">#8A8A8E</color>
-    <color name="accent_text_color">#8A8A8E</color>
-    <color name="comment_input_bg">#1C1C1E</color>
+    <color name="card_bg_color">#252528</color>
+    <color name="primary_text_color">#FFFFFF</color>
+    <color name="secondary_text_color">#9CA3AF</color>
+    <color name="accent_text_color">#9CA3AF</color>
+    <color name="comment_input_bg">#252528</color>
     <color name="comment_input_stroke">#33333C</color>
     <color name="chip_selected_bg">@color/accent_secondary_dark</color>
     <color name="chip_selected_stroke">@color/accent_color</color>
-    <color name="chip_unselected_bg">#1C1C1E</color>
+    <color name="chip_unselected_bg">#252528</color>
     <color name="chip_unselected_stroke">#33333C</color>
     <color name="close_btn_bg">#20FFFFFF</color>
-    <color name="placeholder_bg">#1C1C1E</color>
+    <color name="placeholder_bg">#252528</color>
     <color name="stop_btn_bg">#2A1B20</color>
     <color name="sort_popup_item_selected_bg">#2A2D37</color>
     <color name="sort_popup_item_selected_text">#FFFFFF</color>
@@ -82,10 +82,10 @@
     <color name="player_item_active_stroke">@color/accent_color</color>
 
     <!-- Dialog Colors (Dark Theme Overrides) -->
-    <color name="m3_item_bg">#1E1E1E</color>
-    <color name="dialog_bg">#1C1C1C</color>
-    <color name="dialog_card_bg">#1E1E1E</color>
-    <color name="dialog_input_bg">#1E1E1E</color>
+    <color name="m3_item_bg">#252528</color>
+    <color name="dialog_bg">#1C1C1E</color>
+    <color name="dialog_card_bg">#252528</color>
+    <color name="dialog_input_bg">#252528</color>
     <color name="dialog_input_stroke">#33333C</color>
     <color name="dialog_text_title">#FFFFFF</color>
     <color name="dialog_text_body">#D1D5DB</color>

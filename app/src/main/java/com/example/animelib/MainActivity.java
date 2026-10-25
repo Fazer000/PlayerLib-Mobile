@@ -40,6 +40,9 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Install Android SplashScreen API
+        androidx.core.splashscreen.SplashScreen.installSplashScreen(this);
+
         // Apply theme preference
         ThemeUtils.initTheme(this);
 
