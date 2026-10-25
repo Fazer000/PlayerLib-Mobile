@@ -97,7 +97,8 @@ public class LocalVideoRepository implements VideoRepository {
                 596000,
                 158000000,
                 System.currentTimeMillis() / 1000,
-                "Демо Видео"
+                "Демо Видео",
+                1920, 1080, 0
         ));
         testList.add(new VideoItem(
                 10002,
@@ -107,7 +108,8 @@ public class LocalVideoRepository implements VideoRepository {
                 734000,
                 175000000,
                 System.currentTimeMillis() / 1000,
-                "Демо Видео"
+                "Демо Видео",
+                1920, 1080, 0
         ));
         testList.add(new VideoItem(
                 10003,
@@ -117,27 +119,30 @@ public class LocalVideoRepository implements VideoRepository {
                 522000,
                 120000000,
                 System.currentTimeMillis() / 1000,
-                "Демо Видео"
+                "Демо Видео",
+                1920, 1080, 0
         ));
         testList.add(new VideoItem(
                 10004,
-                "Elephants Dream (Демо)",
-                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                Uri.parse("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"),
-                653000,
-                140000000,
-                System.currentTimeMillis() / 1000,
-                "Демо Видео"
-        ));
-        testList.add(new VideoItem(
-                10005,
-                "For Bigger Blazes (Демо)",
+                "Shorts: Vertical Anime Edit (Демо)",
                 "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
                 Uri.parse("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"),
                 15000,
                 15000000,
                 System.currentTimeMillis() / 1000,
-                "Демо Видео"
+                "Shorts",
+                1080, 1920, 0
+        ));
+        testList.add(new VideoItem(
+                10005,
+                "Shorts: Vertical Cosplay Reel (Демо)",
+                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+                Uri.parse("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"),
+                18000,
+                18000000,
+                System.currentTimeMillis() / 1000,
+                "Shorts",
+                1080, 1920, 0
         ));
         return testList;
     }
@@ -173,6 +178,8 @@ public class LocalVideoRepository implements VideoRepository {
                 MediaStore.Video.Media.DURATION,
                 MediaStore.Video.Media.SIZE,
                 MediaStore.Video.Media.DATE_MODIFIED,
+                MediaStore.Video.Media.WIDTH,
+                MediaStore.Video.Media.HEIGHT,
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
                         ? MediaStore.Video.Media.BUCKET_DISPLAY_NAME : MediaStore.Video.Media.DATA
         };
@@ -187,6 +194,8 @@ public class LocalVideoRepository implements VideoRepository {
                 int durationColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
                 int sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.SIZE);
                 int dateModifiedColumn = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DATE_MODIFIED);
+                int widthColumn = cursor.getColumnIndex(MediaStore.Video.Media.WIDTH);
+                int heightColumn = cursor.getColumnIndex(MediaStore.Video.Media.HEIGHT);
                 int bucketColumn = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
                         ? cursor.getColumnIndexOrThrow(MediaStore.Video.Media.BUCKET_DISPLAY_NAME)
                         : dataColumn;
@@ -198,6 +207,8 @@ public class LocalVideoRepository implements VideoRepository {
                     long duration = cursor.getLong(durationColumn);
                     long size = cursor.getLong(sizeColumn);
                     long dateModified = cursor.getLong(dateModifiedColumn);
+                    int width = widthColumn != -1 ? cursor.getInt(widthColumn) : 0;
+                    int height = heightColumn != -1 ? cursor.getInt(heightColumn) : 0;
 
                     String folderName;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -216,7 +227,7 @@ public class LocalVideoRepository implements VideoRepository {
                         name = new File(path).getName();
                     }
 
-                    list.add(new VideoItem(id, name, path, contentUri, duration, size, dateModified, folderName));
+                    list.add(new VideoItem(id, name, path, contentUri, duration, size, dateModified, folderName, width, height, 0));
                 }
             }
         } catch (Exception e) {
@@ -237,7 +248,7 @@ public class LocalVideoRepository implements VideoRepository {
                 String folderName = dir.getName();
                 Uri uri = Uri.fromFile(f);
                 list.add(new VideoItem(f.hashCode(), f.getName(), f.getAbsolutePath(), uri,
-                        0, f.length(), f.lastModified() / 1000, folderName));
+                        0, f.length(), f.lastModified() / 1000, folderName, 0, 0, 0));
             }
         }
     }

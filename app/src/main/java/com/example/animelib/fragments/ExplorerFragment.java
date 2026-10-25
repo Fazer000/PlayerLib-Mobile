@@ -12,6 +12,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,6 +112,9 @@ public class ExplorerFragment extends Fragment {
     private String selectedFolder = "Все";
     private String currentSearchQuery = "";
     private VideoListFilter.SortOrder currentSortOrder = VideoListFilter.SortOrder.DATE_DESC;
+    private TextView tabRegularVideos, tabShortVideos;
+    private boolean isShortsTabSelected = false;
+    private GestureDetector tabSwipeGestureDetector;
     private boolean isPlaylistCreationMode = false;
     private boolean isGridViewMode = false;
 
@@ -227,6 +232,8 @@ public class ExplorerFragment extends Fragment {
         tvPlaylistSelectionCount = view.findViewById(R.id.tvPlaylistSelectionCount);
         btnEmptyAction = view.findViewById(R.id.btnEmptyAction);
 
+        tabRegularVideos = view.findViewById(R.id.tabRegularVideos);
+        tabShortVideos = view.findViewById(R.id.tabShortVideos);
         etSearchVideos = view.findViewById(R.id.etSearchVideos);
         btnSort = view.findViewById(R.id.btnSort);
         btnCreatePlaylist = view.findViewById(R.id.btnCreatePlaylist);
@@ -260,6 +267,7 @@ public class ExplorerFragment extends Fragment {
 
         setupRecyclerViews();
         setupListeners();
+        setupSwipeGestureDetector();
         loadAndDisplayLastPlayedVideo();
 
         if (hasStoragePermission()) {
@@ -410,7 +418,8 @@ public class ExplorerFragment extends Fragment {
 
     private void updateLayoutManager() {
         if (rvVideos == null || getContext() == null) return;
-        if (isGridViewMode) {
+        boolean forceGrid = isShortsTabSelected || isGridViewMode;
+        if (forceGrid) {
             androidx.recyclerview.widget.GridLayoutManager glm = new androidx.recyclerview.widget.GridLayoutManager(requireContext(), 3);
             glm.setSpanSizeLookup(new androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup() {
                 @Override
@@ -426,6 +435,7 @@ public class ExplorerFragment extends Fragment {
             rvVideos.setLayoutManager(new LinearLayoutManager(requireContext()));
         }
         if (videoFilesAdapter != null) {
+            videoFilesAdapter.setShortsTab(isShortsTabSelected);
             videoFilesAdapter.setGridView(isGridViewMode);
         }
         applyListPaddings();
@@ -446,6 +456,21 @@ public class ExplorerFragment extends Fragment {
     }
 
     private void setupListeners() {
+        if (tabRegularVideos != null) {
+            tabRegularVideos.setOnClickListener(v -> {
+                if (isShortsTabSelected) {
+                    selectTabWithAnimation(false, true);
+                }
+            });
+        }
+        if (tabShortVideos != null) {
+            tabShortVideos.setOnClickListener(v -> {
+                if (!isShortsTabSelected) {
+                    selectTabWithAnimation(true, false);
+                }
+            });
+        }
+
         if (btnSort != null) {
             btnSort.setOnClickListener(this::showSortMenu);
         }
@@ -566,6 +591,138 @@ public class ExplorerFragment extends Fragment {
         animator.start();
     }
 
+    private void setupSwipeGestureDetector() {
+        if (getContext() == null) return;
+        tabSwipeGestureDetector = new GestureDetector(requireContext(), new GestureDetector.SimpleOnGestureListener() {
+            private static final int SWIPE_MIN_DISTANCE = 70;
+            private static final int SWIPE_THRESHOLD_VELOCITY = 80;
+
+            @Override
+            public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+                if (e1 == null || e2 == null) return false;
+                float diffY = e2.getY() - e1.getY();
+                float diffX = e2.getX() - e1.getX();
+
+                if (Math.abs(diffX) > Math.abs(diffY) * 1.2f) {
+                    if (Math.abs(diffX) > SWIPE_MIN_DISTANCE && Math.abs(velocityX) > SWIPE_THRESHOLD_VELOCITY) {
+                        if (diffX < 0) {
+                            // Drag / Swipe Left -> Switch to "Короткие" tab
+                            if (!isShortsTabSelected) {
+                                selectTabWithAnimation(true, false);
+                                return true;
+                            }
+                        } else {
+                            // Drag / Swipe Right -> Switch to "Обычные" tab
+                            if (isShortsTabSelected) {
+                                selectTabWithAnimation(false, true);
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+
+        if (rvVideos != null) {
+            rvVideos.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+                @Override
+                public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                    if (tabSwipeGestureDetector != null) {
+                        tabSwipeGestureDetector.onTouchEvent(e);
+                    }
+                    return false;
+                }
+            });
+        }
+
+        if (swipeRefreshLayout != null) {
+            swipeRefreshLayout.setOnTouchListener((v, event) -> {
+                if (tabSwipeGestureDetector != null) {
+                    return tabSwipeGestureDetector.onTouchEvent(event);
+                }
+                return false;
+            });
+        }
+
+        if (layoutEmptyState != null) {
+            layoutEmptyState.setOnTouchListener((v, event) -> {
+                if (tabSwipeGestureDetector != null) {
+                    return tabSwipeGestureDetector.onTouchEvent(event);
+                }
+                return false;
+            });
+        }
+    }
+
+    private void selectTabWithAnimation(boolean isShorts, boolean isFromLeftToRight) {
+        if (this.isShortsTabSelected == isShorts) return;
+
+        View targetView = (rvVideos != null && rvVideos.getVisibility() == View.VISIBLE) ? rvVideos : layoutEmptyState;
+        if (targetView != null && isAdded()) {
+            float translationX = isFromLeftToRight ? -220f : 220f;
+
+            targetView.animate()
+                    .translationX(-translationX)
+                    .alpha(0.0f)
+                    .setDuration(120)
+                    .withEndAction(() -> {
+                        selectTab(isShorts);
+                        View newTargetView = (rvVideos != null && rvVideos.getVisibility() == View.VISIBLE) ? rvVideos : layoutEmptyState;
+                        if (newTargetView != null) {
+                            newTargetView.setTranslationX(translationX);
+                            newTargetView.setAlpha(0.0f);
+                            newTargetView.animate()
+                                    .translationX(0f)
+                                    .alpha(1.0f)
+                                    .setDuration(160)
+                                    .start();
+                        }
+                    })
+                    .start();
+        } else {
+            selectTab(isShorts);
+        }
+    }
+
+    private void selectTab(boolean isShorts) {
+        if (this.isShortsTabSelected == isShorts) return;
+        this.isShortsTabSelected = isShorts;
+
+        if (isAdded() && getContext() != null) {
+            if (isShorts) {
+                if (tabRegularVideos != null) {
+                    tabRegularVideos.setBackgroundResource(R.drawable.bg_tab_pill_unselected);
+                    tabRegularVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.player_item_inactive_text));
+                }
+                if (tabShortVideos != null) {
+                    tabShortVideos.setBackgroundResource(R.drawable.bg_tab_pill_selected);
+                    tabShortVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_color));
+                }
+            } else {
+                if (tabRegularVideos != null) {
+                    tabRegularVideos.setBackgroundResource(R.drawable.bg_tab_pill_selected);
+                    tabRegularVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.white_color));
+                }
+                if (tabShortVideos != null) {
+                    tabShortVideos.setBackgroundResource(R.drawable.bg_tab_pill_unselected);
+                    tabShortVideos.setTextColor(ContextCompat.getColor(requireContext(), R.color.player_item_inactive_text));
+                }
+            }
+        }
+
+        if (allVideos != null) {
+            foldersList.clear();
+            foldersList.addAll(videoFilter.buildFolders(allVideos, isShortsTabSelected));
+            if (videoFoldersAdapter != null) {
+                videoFoldersAdapter.notifyDataSetChanged();
+            }
+        }
+
+        updateLayoutManager();
+        filterAndDisplayVideos();
+    }
+
     public void loadVideosFromStorage() {
         if (getContext() == null || videoRepository == null) return;
 
@@ -582,7 +739,7 @@ public class ExplorerFragment extends Fragment {
                 allVideos.addAll(scannedVideos);
 
                 foldersList.clear();
-                foldersList.addAll(videoFilter.buildFolders(allVideos));
+                foldersList.addAll(videoFilter.buildFolders(allVideos, isShortsTabSelected));
                 videoFoldersAdapter.notifyDataSetChanged();
 
                 filterAndDisplayVideos();
@@ -597,7 +754,8 @@ public class ExplorerFragment extends Fragment {
                 allVideos,
                 selectedFolder,
                 currentSearchQuery,
-                sortOrder
+                sortOrder,
+                isShortsTabSelected
         );
 
         displayedVideos.clear();
@@ -607,8 +765,13 @@ public class ExplorerFragment extends Fragment {
         if (displayedVideos.isEmpty()) {
             layoutEmptyState.setVisibility(View.VISIBLE);
             rvVideos.setVisibility(View.GONE);
-            tvEmptyTitle.setText("Видео не найдены");
-            tvEmptySubtitle.setText("Проверьте наличие видеофайлов на устройстве или добавьте видео в папку");
+            if (isShortsTabSelected) {
+                tvEmptyTitle.setText("Короткие видео не найдены");
+                tvEmptySubtitle.setText("Проверьте наличие вертикальных видеофайлов на устройстве");
+            } else {
+                tvEmptyTitle.setText("Видео не найдены");
+                tvEmptySubtitle.setText("Проверьте наличие видеофайлов на устройстве или добавьте видео в папку");
+            }
             btnEmptyAction.setText("Обновить");
         } else {
             layoutEmptyState.setVisibility(View.GONE);
@@ -823,8 +986,21 @@ public class ExplorerFragment extends Fragment {
             setupSortItem(popupView, popupWindow, R.id.popup_sort_size_desc, R.id.iv_check_size_desc, R.id.tv_title_size_desc, R.id.iv_icon_size_desc, VideoListFilter.SortOrder.SIZE_DESC);
             setupSortItem(popupView, popupWindow, R.id.popup_sort_size_asc, R.id.iv_check_size_asc, R.id.tv_title_size_asc, R.id.iv_icon_size_asc, VideoListFilter.SortOrder.SIZE_ASC);
 
-            setupViewModeItem(popupView, popupWindow, R.id.popup_view_mode_list, R.id.iv_check_view_list, R.id.tv_title_view_list, R.id.iv_icon_view_list, false);
-            setupViewModeItem(popupView, popupWindow, R.id.popup_view_mode_grid, R.id.iv_check_view_grid, R.id.tv_title_view_grid, R.id.iv_icon_view_grid, true);
+            View viewModeList = popupView.findViewById(R.id.popup_view_mode_list);
+            View viewModeGrid = popupView.findViewById(R.id.popup_view_mode_grid);
+            View dividerViewMode = popupView.findViewById(R.id.divider_view_mode);
+
+            if (isShortsTabSelected) {
+                if (viewModeList != null) viewModeList.setVisibility(View.GONE);
+                if (viewModeGrid != null) viewModeGrid.setVisibility(View.GONE);
+                if (dividerViewMode != null) dividerViewMode.setVisibility(View.GONE);
+            } else {
+                if (viewModeList != null) viewModeList.setVisibility(View.VISIBLE);
+                if (viewModeGrid != null) viewModeGrid.setVisibility(View.VISIBLE);
+                if (dividerViewMode != null) dividerViewMode.setVisibility(View.VISIBLE);
+                setupViewModeItem(popupView, popupWindow, R.id.popup_view_mode_list, R.id.iv_check_view_list, R.id.tv_title_view_list, R.id.iv_icon_view_list, false);
+                setupViewModeItem(popupView, popupWindow, R.id.popup_view_mode_grid, R.id.iv_check_view_grid, R.id.tv_title_view_grid, R.id.iv_icon_view_grid, true);
+            }
 
             int xOffset = -(width - anchorView.getWidth());
             int yOffset = (int) (6 * density);

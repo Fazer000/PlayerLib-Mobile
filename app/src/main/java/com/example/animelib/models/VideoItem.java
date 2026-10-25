@@ -15,9 +15,18 @@ public class VideoItem implements Serializable {
     private final String folderName;
     private long lastPositionMs;
     private int progressPercent;
+    private int width;
+    private int height;
+    private int rotation;
 
     public VideoItem(long id, String title, String path, Uri uri, long durationMs,
                      long sizeBytes, long dateModified, String folderName) {
+        this(id, title, path, uri, durationMs, sizeBytes, dateModified, folderName, 0, 0, 0);
+    }
+
+    public VideoItem(long id, String title, String path, Uri uri, long durationMs,
+                     long sizeBytes, long dateModified, String folderName,
+                     int width, int height, int rotation) {
         this.id = id;
         this.title = title;
         this.path = path;
@@ -28,6 +37,9 @@ public class VideoItem implements Serializable {
         this.folderName = folderName != null && !folderName.isEmpty() ? folderName : "Видео";
         this.lastPositionMs = 0;
         this.progressPercent = 0;
+        this.width = width;
+        this.height = height;
+        this.rotation = rotation;
     }
 
     public long getId() { return id; }
@@ -65,9 +77,9 @@ public class VideoItem implements Serializable {
         long timeMs = dateModified * 1000L;
         long now = System.currentTimeMillis();
         long diff = now - timeMs;
-        // Video was added or modified within the last 7 days
         return diff >= -86400000L && diff <= 7L * 24 * 60 * 60 * 1000L;
     }
+
     public String getPath() { return path; }
     public Uri getUri() { return uriString != null && !uriString.isEmpty() ? Uri.parse(uriString) : null; }
     public String getUriString() { return uriString; }
@@ -85,6 +97,36 @@ public class VideoItem implements Serializable {
     }
     public int getProgressPercent() { return progressPercent; }
     public void setProgressPercent(int progressPercent) { this.progressPercent = progressPercent; }
+
+    public int getWidth() { return width; }
+    public void setWidth(int width) { this.width = width; }
+    public int getHeight() { return height; }
+    public void setHeight(int height) { this.height = height; }
+    public int getRotation() { return rotation; }
+    public void setRotation(int rotation) { this.rotation = rotation; }
+
+    public boolean isShortVideo() {
+        if (width > 0 && height > 0) {
+            int effectiveW = (rotation == 90 || rotation == 270) ? height : width;
+            int effectiveH = (rotation == 90 || rotation == 270) ? width : height;
+            return effectiveH > effectiveW;
+        }
+
+        if (title != null) {
+            String lower = title.toLowerCase(Locale.ROOT);
+            if (lower.contains("short") || lower.contains("reel") || lower.contains("tiktok") || lower.contains("vertical")) {
+                return true;
+            }
+        }
+        if (path != null) {
+            String lower = path.toLowerCase(Locale.ROOT);
+            if (lower.contains("short") || lower.contains("reel") || lower.contains("tiktok") || lower.contains("vertical")) {
+                return true;
+            }
+        }
+
+        return durationMs > 0 && durationMs <= 60000;
+    }
 
     public String getFormattedDuration() {
         if (durationMs <= 0) return "--:--";

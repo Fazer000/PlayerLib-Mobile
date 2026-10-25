@@ -160,73 +160,136 @@
                 android:id="@+id/layoutNormalButtons"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical|end"
+                android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:clipChildren="false"
                 android:clipToPadding="false">
 
-                <!-- Create Playlist Button -->
+                <!-- Left Top Corner Tabs Container -->
                 <androidx.cardview.widget.CardView
-                    android:layout_width="48dp"
+                    android:id="@+id/cardVideoTabs"
+                    android:layout_width="wrap_content"
                     android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
                     app:cardBackgroundColor="@color/card_bg_color"
                     app:cardCornerRadius="24dp"
                     app:cardElevation="6dp"
                     app:cardPreventCornerOverlap="false">
 
-                    <ImageButton
-                        android:id="@+id/btnCreatePlaylist"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="match_parent"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_episodes"
-                        app:tint="@color/accent_color"
-                        android:padding="8dp"
-                        android:contentDescription="Создать плейлист" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="4dp">
+
+                        <TextView
+                            android:id="@+id/tabRegularVideos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:background="@drawable/bg_tab_pill_selected"
+                            android:gravity="center"
+                            android:paddingHorizontal="14dp"
+                            android:text="Обычные"
+                            android:textColor="@color/white_color"
+                            android:textSize="12.5sp"
+                            android:fontFamily="@font/open_sans_bold"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                        <TextView
+                            android:id="@+id/tabShortVideos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:layout_marginStart="2dp"
+                            android:background="@drawable/bg_tab_pill_unselected"
+                            android:gravity="center"
+                            android:paddingHorizontal="14dp"
+                            android:text="Короткие"
+                            android:textColor="@color/player_item_inactive_text"
+                            android:textSize="12.5sp"
+                            android:fontFamily="@font/open_sans_bold"
+                            android:clickable="true"
+                            android:focusable="true" />
+
+                    </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
-                <!-- Sort Button -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    app:cardBackgroundColor="@color/card_bg_color"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="6dp"
-                    app:cardPreventCornerOverlap="false">
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
 
-                    <ImageButton
-                        android:id="@+id/btnSort"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_sort_arrows"
-                        app:tint="@color/primary_text_color"
-                        android:padding="8dp"
-                        android:contentDescription="Сортировка" />
-                </androidx.cardview.widget.CardView>
+                <!-- Right Top Corner Action Buttons -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
 
-                <!-- Search Toggle Button -->
-                <androidx.cardview.widget.CardView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="8dp"
-                    app:cardBackgroundColor="@color/card_bg_color"
-                    app:cardCornerRadius="24dp"
-                    app:cardElevation="6dp"
-                    app:cardPreventCornerOverlap="false">
+                    <!-- Create Playlist Button -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="6dp"
+                        app:cardBackgroundColor="@color/card_bg_color"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="6dp"
+                        app:cardPreventCornerOverlap="false">
 
-                    <ImageButton
-                        android:id="@+id/btnSearchToggle"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_search"
-                        app:tint="@color/primary_text_color"
-                        android:padding="8dp"
-                        android:contentDescription="Поиск" />
-                </androidx.cardview.widget.CardView>
+                        <ImageButton
+                            android:id="@+id/btnCreatePlaylist"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_episodes"
+                            app:tint="@color/accent_color"
+                            android:padding="8dp"
+                            android:contentDescription="Создать плейлист" />
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Sort Button -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="6dp"
+                        app:cardBackgroundColor="@color/card_bg_color"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="6dp"
+                        app:cardPreventCornerOverlap="false">
+
+                        <ImageButton
+                            android:id="@+id/btnSort"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_sort_arrows"
+                            app:tint="@color/primary_text_color"
+                            android:padding="8dp"
+                            android:contentDescription="Сортировка" />
+                    </androidx.cardview.widget.CardView>
+
+                    <!-- Search Toggle Button -->
+                    <androidx.cardview.widget.CardView
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="6dp"
+                        app:cardBackgroundColor="@color/card_bg_color"
+                        app:cardCornerRadius="24dp"
+                        app:cardElevation="6dp"
+                        app:cardPreventCornerOverlap="false">
+
+                        <ImageButton
+                            android:id="@+id/btnSearchToggle"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_search"
+                            app:tint="@color/primary_text_color"
+                            android:padding="8dp"
+                            android:contentDescription="Поиск" />
+                    </androidx.cardview.widget.CardView>
+
+                </LinearLayout>
 
             </LinearLayout>
 

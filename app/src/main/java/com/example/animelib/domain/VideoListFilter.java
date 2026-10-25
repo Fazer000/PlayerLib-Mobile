@@ -28,16 +28,25 @@ public class VideoListFilter {
      * Создает список папок со счетчиками файлов, включая корневую категорию "Все".
      */
     public List<VideoFolder> buildFolders(List<VideoItem> videos) {
+        return buildFolders(videos, false);
+    }
+
+    public List<VideoFolder> buildFolders(List<VideoItem> videos, boolean isShortsTab) {
         Map<String, Integer> folderCounts = new HashMap<>();
+        int tabTotalCount = 0;
         if (videos != null) {
             for (VideoItem v : videos) {
-                String folder = v.getFolderName();
-                folderCounts.put(folder, folderCounts.getOrDefault(folder, 0) + 1);
+                boolean matchesTab = isShortsTab ? v.isShortVideo() : !v.isShortVideo();
+                if (matchesTab) {
+                    tabTotalCount++;
+                    String folder = v.getFolderName();
+                    folderCounts.put(folder, folderCounts.getOrDefault(folder, 0) + 1);
+                }
             }
         }
 
         List<VideoFolder> foldersList = new ArrayList<>();
-        foldersList.add(new VideoFolder("Все", videos != null ? videos.size() : 0));
+        foldersList.add(new VideoFolder("Все", tabTotalCount));
 
         List<String> sortedNames = new ArrayList<>(folderCounts.keySet());
         Collections.sort(sortedNames);
@@ -55,6 +64,14 @@ public class VideoListFilter {
                                          String selectedFolder,
                                          String searchQuery,
                                          SortOrder sortOrder) {
+        return filterAndSort(allVideos, selectedFolder, searchQuery, sortOrder, false);
+    }
+
+    public List<VideoItem> filterAndSort(List<VideoItem> allVideos,
+                                         String selectedFolder,
+                                         String searchQuery,
+                                         SortOrder sortOrder,
+                                         boolean isShortsTab) {
         List<VideoItem> filtered = new ArrayList<>();
         if (allVideos == null) return filtered;
 
@@ -62,13 +79,15 @@ public class VideoListFilter {
         String folder = (selectedFolder != null && !selectedFolder.isEmpty()) ? selectedFolder : "Все";
 
         for (VideoItem v : allVideos) {
+            boolean matchesTab = isShortsTab ? v.isShortVideo() : !v.isShortVideo();
+
             boolean matchesFolder = "Все".equalsIgnoreCase(folder)
                     || folder.equalsIgnoreCase(v.getFolderName());
 
             boolean matchesSearch = query.isEmpty()
                     || (v.getTitle() != null && v.getTitle().toLowerCase(Locale.ROOT).contains(query));
 
-            if (matchesFolder && matchesSearch) {
+            if (matchesTab && matchesFolder && matchesSearch) {
                 filtered.add(v);
             }
         }

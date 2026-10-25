@@ -35,6 +35,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     public static final int VIEW_TYPE_HEADER = 0;
     public static final int VIEW_TYPE_VIDEO_LIST = 1;
     public static final int VIEW_TYPE_VIDEO_GRID = 2;
+    public static final int VIEW_TYPE_VIDEO_SHORT_GRID = 3;
     public static final int VIEW_TYPE_VIDEO = 1;
 
     public static class DateHeader {
@@ -58,6 +59,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     private boolean isSelectionMode = false;
     private boolean isGridView = false;
+    private boolean isShortsTab = false;
     private final List<VideoItem> selectedVideos = new ArrayList<>();
 
     public void setGridView(boolean gridView) {
@@ -69,6 +71,17 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public boolean isGridView() {
         return isGridView;
+    }
+
+    public void setShortsTab(boolean shortsTab) {
+        if (this.isShortsTab != shortsTab) {
+            this.isShortsTab = shortsTab;
+            notifyDataSetChanged();
+        }
+    }
+
+    public boolean isShortsTab() {
+        return isShortsTab;
     }
 
     private static final int CACHE_SIZE = 40 * 1024 * 1024; // 40MB memory cache
@@ -183,6 +196,15 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         if (items.get(position) instanceof DateHeader) {
             return VIEW_TYPE_HEADER;
         }
+        if (isShortsTab) {
+            return VIEW_TYPE_VIDEO_SHORT_GRID;
+        }
+        if (items.get(position) instanceof VideoItem) {
+            VideoItem video = (VideoItem) items.get(position);
+            if (video != null && video.isShortVideo() && isGridView) {
+                return VIEW_TYPE_VIDEO_SHORT_GRID;
+            }
+        }
         return isGridView ? VIEW_TYPE_VIDEO_GRID : VIEW_TYPE_VIDEO_LIST;
     }
 
@@ -192,6 +214,9 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         if (viewType == VIEW_TYPE_HEADER) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_video_date_header, parent, false);
             return new DateHeaderViewHolder(view);
+        } else if (viewType == VIEW_TYPE_VIDEO_SHORT_GRID) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_video_short_grid, parent, false);
+            return new VideoViewHolder(view);
         } else if (viewType == VIEW_TYPE_VIDEO_GRID) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_video_grid, parent, false);
             return new VideoViewHolder(view);
@@ -220,8 +245,10 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         VideoViewHolder holder = (VideoViewHolder) rawHolder;
         VideoItem video = (VideoItem) itemObj;
 
+        boolean isGridFormat = isGridView || isShortsTab || rawHolder.getItemViewType() == VIEW_TYPE_VIDEO_SHORT_GRID;
+
         if (holder.tvVideoTitle != null) {
-            if (isGridView) {
+            if (isGridFormat) {
                 holder.tvVideoTitle.setVisibility(View.GONE);
             } else {
                 holder.tvVideoTitle.setText(video.getDisplayTitle());
@@ -237,7 +264,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         // Extension Tag
         String extension = video.getFileExtension();
         if (holder.tvVideoExtensionTag != null) {
-            if (isGridView) {
+            if (isGridFormat) {
                 holder.tvVideoExtensionTag.setVisibility(View.GONE);
             } else {
                 if (!extension.isEmpty() && extension.length() <= 5) {
@@ -255,7 +282,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
 
         if (holder.tvVideoFolder != null) {
-            if (isGridView) {
+            if (isGridFormat) {
                 holder.tvVideoFolder.setVisibility(View.GONE);
             } else {
                 holder.tvVideoFolder.setText(video.getFolderName());
@@ -264,7 +291,7 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         }
 
         if (holder.tvVideoSize != null) {
-            if (isGridView) {
+            if (isGridFormat) {
                 holder.tvVideoSize.setVisibility(View.GONE);
             } else {
                 String sizeStr = video.getFormattedSize();

@@ -260,6 +260,7 @@
 
     <!-- Разделитель -->
     <View
+        android:id="@+id/divider_view_mode"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#22FFFFFF"
