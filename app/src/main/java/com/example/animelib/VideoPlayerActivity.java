@@ -97,14 +97,9 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
     private TextView tvAnimeSubtitle;
     private TextView tvPortraitAnimeTitle;
     private TextView tvPortraitPlaylistInfo;
-    private View btnPortraitAddToPlaylist;
-    private View btnPortraitSpeed;
-    private View btnPortraitFilters;
-    private View btnPortraitSound;
-    private View btnPortraitInfo;
-    private View btnPortraitSettings;
-    private TextView tvPortraitSpeedText;
-    private TextView tvPortraitFormatTag;
+    TextView tvPortraitFormatTag;
+    private TextView tvPortraitNewTag;
+    private TextView tvPortraitFolderTag;
     private TextView tvPortraitEpisodesHeaderTitle;
     private TextView tvPortraitEpisodesCountBadge;
     private RecyclerView rvPlaylistEpisodes;
@@ -235,74 +230,11 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
 
         rvPlaylistEpisodes = findViewById(R.id.rvPlaylistEpisodes);
         tvPortraitPlaylistInfo = findViewById(R.id.tvPortraitPlaylistInfo);
-        btnPortraitAddToPlaylist = findViewById(R.id.btnPortraitAddToPlaylist);
-        btnPortraitSpeed = findViewById(R.id.btnPortraitSpeed);
-        btnPortraitFilters = findViewById(R.id.btnPortraitFilters);
-        btnPortraitSound = findViewById(R.id.btnPortraitSound);
-        btnPortraitInfo = findViewById(R.id.btnPortraitInfo);
-        btnPortraitSettings = findViewById(R.id.btnPortraitSettings);
-        tvPortraitSpeedText = findViewById(R.id.tvPortraitSpeedText);
         tvPortraitFormatTag = findViewById(R.id.tvPortraitFormatTag);
+        tvPortraitNewTag = findViewById(R.id.tvPortraitNewTag);
+        tvPortraitFolderTag = findViewById(R.id.tvPortraitFolderTag);
         tvPortraitEpisodesHeaderTitle = findViewById(R.id.tvPortraitEpisodesHeaderTitle);
         tvPortraitEpisodesCountBadge = findViewById(R.id.tvPortraitEpisodesCountBadge);
-
-        if (btnPortraitAddToPlaylist != null) {
-            btnPortraitAddToPlaylist.setOnClickListener(v -> {
-                VideoItem video = getCurrentVideoItem();
-                if (video != null) {
-                    showAddToPlaylistDialog(video);
-                } else {
-                    CustomToast.showInfo(this, "Видео не выбрано");
-                }
-            });
-        }
-
-        if (btnPortraitSpeed != null) {
-            btnPortraitSpeed.setOnClickListener(v -> showSettingsBottomSheet());
-        }
-
-        if (btnPortraitFilters != null) {
-            btnPortraitFilters.setOnClickListener(v -> {
-                float[] filters = databaseManager.loadVideoFilters();
-                VideoFiltersBottomSheet dialog = new VideoFiltersBottomSheet(
-                        this,
-                        filters[0], filters[1], filters[2], filters[3], filters[4],
-                        (b, c, s, g, h) -> {
-                            databaseManager.saveVideoFilters(b, c, s, g, h);
-                            if (videoFiltersManager != null) {
-                                videoFiltersManager.setFilters(b, c, s, g, h);
-                            }
-                        }
-                );
-                dialog.show();
-            });
-        }
-
-        if (btnPortraitSound != null) {
-            btnPortraitSound.setOnClickListener(v -> {
-                boolean currentVal = databaseManager.loadSurroundSoundSetting();
-                boolean newVal = !currentVal;
-                databaseManager.saveSurroundSoundSetting(newVal);
-                if (surroundSoundManager != null) {
-                    surroundSoundManager.setEnabled(newVal);
-                }
-                CustomToast.showInfo(this, newVal ? "3D Звук включен" : "3D Звук выключен");
-            });
-        }
-
-        if (btnPortraitInfo != null) {
-            btnPortraitInfo.setOnClickListener(v -> {
-                VideoItem video = getCurrentVideoItem();
-                if (video != null) {
-                    VideoInfoBottomSheet infoBs = new VideoInfoBottomSheet(this, video);
-                    infoBs.show();
-                }
-            });
-        }
-
-        if (btnPortraitSettings != null) {
-            btnPortraitSettings.setOnClickListener(v -> showSettingsBottomSheet());
-        }
 
         if (rvPlaylistEpisodes != null) {
             rvPlaylistEpisodes.setLayoutManager(new LinearLayoutManager(this));
@@ -576,33 +508,50 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
             }
         }
 
+        VideoItem video = getCurrentVideoItem();
+
         // Portrait content below player
         if (tvPortraitAnimeTitle != null) {
             tvPortraitAnimeTitle.setText(mainTitle);
         }
         if (tvPortraitPlaylistInfo != null) {
-            String folderName = playlistManager.getCurrentFolderName();
-            String infoStr = subtitleText != null ? subtitleText : (folderName != null ? "Папка: " + folderName : "Видео");
-            tvPortraitPlaylistInfo.setText(infoStr);
+            String sizeStr = video != null ? video.getFormattedSize() : "";
+            String dateStr = video != null ? video.getFormattedDate() : "";
+            if (!sizeStr.isEmpty() && !dateStr.isEmpty()) {
+                tvPortraitPlaylistInfo.setText(sizeStr + " • " + dateStr);
+            } else if (!sizeStr.isEmpty()) {
+                tvPortraitPlaylistInfo.setText(sizeStr);
+            } else if (!dateStr.isEmpty()) {
+                tvPortraitPlaylistInfo.setText(dateStr);
+            } else {
+                String folderName = playlistManager.getCurrentFolderName();
+                String infoStr = subtitleText != null ? subtitleText : (folderName != null ? "Папка: " + folderName : "Видео");
+                tvPortraitPlaylistInfo.setText(infoStr);
+            }
             tvPortraitPlaylistInfo.setVisibility(View.VISIBLE);
         }
 
-        if (tvPortraitSpeedText != null) {
-            tvPortraitSpeedText.setText(String.format(Locale.US, "%.1fx", currentPlaybackSpeed));
-        }
-
-        String path = playlistManager.getCurrentPath();
-        if (tvPortraitFormatTag != null) {
-            if (path != null && path.contains(".")) {
-                String ext = path.substring(path.lastIndexOf(".") + 1).toUpperCase(Locale.ROOT);
-                if (ext.length() <= 5) {
+        if (video != null) {
+            if (tvPortraitNewTag != null) {
+                tvPortraitNewTag.setVisibility(video.isNew() ? View.VISIBLE : View.GONE);
+            }
+            if (tvPortraitFormatTag != null) {
+                String ext = video.getFileExtension();
+                if (!ext.isEmpty() && ext.length() <= 5) {
                     tvPortraitFormatTag.setText(ext);
                     tvPortraitFormatTag.setVisibility(View.VISIBLE);
                 } else {
                     tvPortraitFormatTag.setVisibility(View.GONE);
                 }
-            } else {
-                tvPortraitFormatTag.setVisibility(View.GONE);
+            }
+            if (tvPortraitFolderTag != null) {
+                String folderName = video.getFolderName();
+                if (folderName != null && !folderName.isEmpty()) {
+                    tvPortraitFolderTag.setText(folderName);
+                    tvPortraitFolderTag.setVisibility(View.VISIBLE);
+                } else {
+                    tvPortraitFolderTag.setVisibility(View.GONE);
+                }
             }
         }
 
@@ -893,9 +842,6 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
                 speed -> {
                     currentPlaybackSpeed = speed;
                     if (player != null) player.setPlaybackParameters(new PlaybackParameters(speed));
-                    if (tvPortraitSpeedText != null) {
-                        tvPortraitSpeedText.setText(String.format(Locale.US, "%.1fx", speed));
-                    }
                 },
                 databaseManager.loadAmbientLightSetting(),
                 enabled -> {

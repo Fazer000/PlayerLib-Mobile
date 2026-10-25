@@ -89,6 +89,22 @@
         <item name="android:textColor">@color/dt_primary_text_color</item>
     </style>
 
+    <style name="ShapeAppearance.AnimeLIB.TopCard" parent="ShapeAppearance.Material3.Corner.None">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">18dp</item>
+        <item name="cornerSizeTopRight">18dp</item>
+        <item name="cornerSizeBottomLeft">6dp</item>
+        <item name="cornerSizeBottomRight">6dp</item>
+    </style>
+
+    <style name="ShapeAppearance.AnimeLIB.BottomCard" parent="ShapeAppearance.Material3.Corner.None">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSizeTopLeft">6dp</item>
+        <item name="cornerSizeTopRight">6dp</item>
+        <item name="cornerSizeBottomLeft">18dp</item>
+        <item name="cornerSizeBottomRight">18dp</item>
+    </style>
+
     <!-- Основная тема для BottomSheetDialog (dark mode) -->
     <style name="ThemeOverlay.AnimeLIB.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="primaryTextColor">@color/dt_primary_text_color</item>

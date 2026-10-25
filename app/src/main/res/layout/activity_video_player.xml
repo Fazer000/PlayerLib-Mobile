@@ -361,63 +361,39 @@
             android:clipToPadding="false"
             android:visibility="gone">
 
-            <!-- Title & Info Header Card with Quick Action Pills -->
+            <!-- Title & Info Header Card (Top Card) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardPortraitTitleHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
                 android:layout_marginTop="8dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="2dp"
                 app:cardBackgroundColor="@color/card_bg_color"
-                app:cardCornerRadius="18dp"
                 app:cardElevation="6dp"
-                app:strokeWidth="0dp">
+                app:strokeWidth="0dp"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.AnimeLIB.TopCard">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingHorizontal="14dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp">
+                    android:paddingVertical="12dp">
 
-                    <!-- Title & Format Badge Row -->
-                    <LinearLayout
+                    <!-- Title -->
+                    <TextView
+                        android:id="@+id/tvPortraitAnimeTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
+                        android:text="Загрузка..."
+                        android:textColor="@color/primary_text_color"
+                        android:textSize="15sp"
+                        android:fontFamily="@font/open_sans_bold"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
 
-                        <TextView
-                            android:id="@+id/tvPortraitAnimeTitle"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Загрузка..."
-                            android:textColor="@color/primary_text_color"
-                            android:textSize="16.5sp"
-                            android:fontFamily="@font/open_sans_bold"
-                            android:maxLines="2"
-                            android:ellipsize="end" />
-
-                        <TextView
-                            android:id="@+id/tvPortraitFormatTag"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
-                            android:background="@drawable/bg_video_thumbnail_badge"
-                            android:paddingHorizontal="6dp"
-                            android:paddingVertical="2dp"
-                            android:text="MP4"
-                            android:textColor="@color/white_color"
-                            android:textSize="10.5sp"
-                            android:fontFamily="@font/open_sans_bold"
-                            android:visibility="gone" />
-
-                    </LinearLayout>
-
-                    <!-- Subtitle / Meta Info -->
+                    <!-- File Size & Date -->
                     <TextView
                         android:id="@+id/tvPortraitPlaylistInfo"
                         android:layout_width="match_parent"
@@ -426,293 +402,108 @@
                         android:text="Список серий плейлиста"
                         android:textColor="@color/player_item_inactive_text"
                         android:textSize="12sp"
-                        android:fontFamily="@font/open_sans_semibold" />
+                        android:fontFamily="@font/open_sans" />
 
-                    <!-- Quick Action Pills Row -->
-                    <HorizontalScrollView
+                    <!-- Tags Row: New, Extension, Folder -->
+                    <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:scrollbars="none"
-                        android:overScrollMode="never"
-                        android:clipChildren="false"
-                        android:clipToPadding="false">
+                        android:layout_marginTop="6dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
 
-                        <LinearLayout
+                        <TextView
+                            android:id="@+id/tvPortraitNewTag"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:gravity="center_vertical">
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_new_badge"
+                            android:paddingHorizontal="6dp"
+                            android:paddingVertical="2dp"
+                            android:textColor="@color/accent_color"
+                            android:textSize="9.5sp"
+                            android:fontFamily="@font/open_sans_bold"
+                            android:text="НОВОЕ"
+                            android:visibility="gone" />
 
-                            <!-- Action 1: Add to Playlist -->
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnPortraitAddToPlaylist"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:layout_marginEnd="8dp"
-                                app:cardBackgroundColor="@color/accent_color_alpha_15"
-                                app:cardCornerRadius="18dp"
-                                app:cardElevation="0dp"
-                                app:strokeColor="@color/accent_color_alpha_40"
-                                app:strokeWidth="1dp"
-                                android:clickable="true"
-                                android:focusable="true">
+                        <TextView
+                            android:id="@+id/tvPortraitFormatTag"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:background="@drawable/bg_search_pill_badge"
+                            android:paddingHorizontal="7dp"
+                            android:paddingVertical="2dp"
+                            android:textColor="@color/player_item_inactive_text"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/open_sans_bold"
+                            android:text="MP4"
+                            android:visibility="gone" />
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical"
-                                    android:paddingHorizontal="12dp">
+                        <TextView
+                            android:id="@+id/tvPortraitFolderTag"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_search_pill_badge"
+                            android:paddingHorizontal="7dp"
+                            android:paddingVertical="2dp"
+                            android:textColor="@color/player_item_inactive_text"
+                            android:textSize="10sp"
+                            android:fontFamily="@font/open_sans_semibold"
+                            android:text="Downloads"
+                            android:visibility="gone" />
 
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_episodes"
-                                        app:tint="@color/accent_color"
-                                        android:contentDescription="Плейлист" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="Плейлист"
-                                        android:textColor="@color/accent_color"
-                                        android:textSize="12sp"
-                                        android:fontFamily="@font/open_sans_bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <!-- Action 2: Speed -->
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnPortraitSpeed"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:layout_marginEnd="8dp"
-                                app:cardBackgroundColor="@color/chip_unselected_bg"
-                                app:cardCornerRadius="18dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp"
-                                android:clickable="true"
-                                android:focusable="true">
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical"
-                                    android:paddingHorizontal="12dp">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_speed"
-                                        app:tint="@color/primary_text_color"
-                                        android:contentDescription="Скорость" />
-
-                                    <TextView
-                                        android:id="@+id/tvPortraitSpeedText"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="1.0x"
-                                        android:textColor="@color/primary_text_color"
-                                        android:textSize="12sp"
-                                        android:fontFamily="@font/open_sans_bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <!-- Action 3: Filters -->
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnPortraitFilters"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:layout_marginEnd="8dp"
-                                app:cardBackgroundColor="@color/chip_unselected_bg"
-                                app:cardCornerRadius="18dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp"
-                                android:clickable="true"
-                                android:focusable="true">
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical"
-                                    android:paddingHorizontal="12dp">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_tune_sliders"
-                                        app:tint="@color/primary_text_color"
-                                        android:contentDescription="Фильтры" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="Фильтры"
-                                        android:textColor="@color/primary_text_color"
-                                        android:textSize="12sp"
-                                        android:fontFamily="@font/open_sans_bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <!-- Action 4: Audio / 3D Sound -->
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnPortraitSound"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:layout_marginEnd="8dp"
-                                app:cardBackgroundColor="@color/chip_unselected_bg"
-                                app:cardCornerRadius="18dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp"
-                                android:clickable="true"
-                                android:focusable="true">
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical"
-                                    android:paddingHorizontal="12dp">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_surround_sound"
-                                        app:tint="@color/primary_text_color"
-                                        android:contentDescription="3D Звук" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="3D Звук"
-                                        android:textColor="@color/primary_text_color"
-                                        android:textSize="12sp"
-                                        android:fontFamily="@font/open_sans_bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <!-- Action 5: File Details -->
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnPortraitInfo"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                android:layout_marginEnd="8dp"
-                                app:cardBackgroundColor="@color/chip_unselected_bg"
-                                app:cardCornerRadius="18dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp"
-                                android:clickable="true"
-                                android:focusable="true">
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical"
-                                    android:paddingHorizontal="12dp">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_file_info"
-                                        app:tint="@color/primary_text_color"
-                                        android:contentDescription="Детали" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="Детали"
-                                        android:textColor="@color/primary_text_color"
-                                        android:textSize="12sp"
-                                        android:fontFamily="@font/open_sans_bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                            <!-- Action 6: Player Settings -->
-                            <com.google.android.material.card.MaterialCardView
-                                android:id="@+id/btnPortraitSettings"
-                                android:layout_width="wrap_content"
-                                android:layout_height="36dp"
-                                app:cardBackgroundColor="@color/chip_unselected_bg"
-                                app:cardCornerRadius="18dp"
-                                app:cardElevation="0dp"
-                                app:strokeWidth="0dp"
-                                android:clickable="true"
-                                android:focusable="true">
-
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="match_parent"
-                                    android:orientation="horizontal"
-                                    android:gravity="center_vertical"
-                                    android:paddingHorizontal="12dp">
-
-                                    <ImageView
-                                        android:layout_width="16dp"
-                                        android:layout_height="16dp"
-                                        android:src="@drawable/ic_settings"
-                                        app:tint="@color/primary_text_color"
-                                        android:contentDescription="Настройки" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="Настройки"
-                                        android:textColor="@color/primary_text_color"
-                                        android:textSize="12sp"
-                                        android:fontFamily="@font/open_sans_bold" />
-                                </LinearLayout>
-                            </com.google.android.material.card.MaterialCardView>
-
-                        </LinearLayout>
-                    </HorizontalScrollView>
+                    </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Episodes Section Header -->
-            <LinearLayout
-                android:id="@+id/layoutPortraitEpisodesHeader"
+            <!-- Episodes Section Header Card (Bottom Card) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardPortraitEpisodesHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginHorizontal="16dp"
-                android:layout_marginTop="4dp"
-                android:layout_marginBottom="6dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="2dp"
+                android:layout_marginBottom="8dp"
+                app:cardBackgroundColor="@color/card_bg_color"
+                app:cardElevation="6dp"
+                app:strokeWidth="0dp"
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.AnimeLIB.BottomCard">
 
-                <TextView
-                    android:id="@+id/tvPortraitEpisodesHeaderTitle"
-                    android:layout_width="0dp"
+                <LinearLayout
+                    android:id="@+id/layoutPortraitEpisodesHeader"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Серии плейлиста"
-                    android:textColor="@color/primary_text_color"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/open_sans_bold" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="10dp">
 
-                <TextView
-                    android:id="@+id/tvPortraitEpisodesCountBadge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_video_thumbnail_badge"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="3dp"
-                    android:text="1 / 1"
-                    android:textColor="@color/accent_color"
-                    android:textSize="11.5sp"
-                    android:fontFamily="@font/open_sans_bold" />
+                    <TextView
+                        android:id="@+id/tvPortraitEpisodesHeaderTitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Серии плейлиста"
+                        android:textColor="@color/primary_text_color"
+                        android:textSize="14sp"
+                        android:fontFamily="@font/open_sans_bold" />
 
-            </LinearLayout>
+                    <TextView
+                        android:id="@+id/tvPortraitEpisodesCountBadge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_video_thumbnail_badge"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="3dp"
+                        android:text="1 / 1"
+                        android:textColor="@color/accent_color"
+                        android:textSize="11.5sp"
+                        android:fontFamily="@font/open_sans_bold" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Episodes RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
