@@ -26,10 +26,31 @@ public class PlayerLockController {
     private final Context context;
     private final FrameLayout layoutLockedOverlay;
     private final LinearLayout lockedStatusBadge;
+    private View swipeUnlockPill;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private boolean isScreenLocked = false;
     private OnLockStateChangeListener lockStateChangeListener;
+
+    private final Runnable hideLockUiRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (lockedStatusBadge != null) {
+                lockedStatusBadge.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction(() -> lockedStatusBadge.setVisibility(View.GONE))
+                        .start();
+            }
+            if (swipeUnlockPill != null) {
+                swipeUnlockPill.animate()
+                        .alpha(0f)
+                        .setDuration(300)
+                        .withEndAction(() -> swipeUnlockPill.setVisibility(View.GONE))
+                        .start();
+            }
+        }
+    };
 
     public PlayerLockController(@NonNull Context context,
                                 @Nullable FrameLayout layoutLockedOverlay,
@@ -37,6 +58,10 @@ public class PlayerLockController {
         this.context = context;
         this.layoutLockedOverlay = layoutLockedOverlay;
         this.lockedStatusBadge = lockedStatusBadge;
+
+        if (layoutLockedOverlay != null) {
+            this.swipeUnlockPill = layoutLockedOverlay.findViewById(com.example.animelib.R.id.swipeUnlockPill);
+        }
 
         setupLockOverlayGestures();
     }
@@ -49,16 +74,30 @@ public class PlayerLockController {
         return isScreenLocked;
     }
 
+    private void showLockUiTemp(long delayMs) {
+        handler.removeCallbacks(hideLockUiRunnable);
+        if (lockedStatusBadge != null) {
+            lockedStatusBadge.animate().cancel();
+            lockedStatusBadge.setAlpha(1f);
+            lockedStatusBadge.setVisibility(View.VISIBLE);
+        }
+        if (swipeUnlockPill != null) {
+            swipeUnlockPill.animate().cancel();
+            swipeUnlockPill.setAlpha(1f);
+            swipeUnlockPill.setVisibility(View.VISIBLE);
+        }
+        handler.postDelayed(hideLockUiRunnable, delayMs);
+    }
+
     public void lock() {
         isScreenLocked = true;
         if (layoutLockedOverlay != null) {
             layoutLockedOverlay.setVisibility(View.VISIBLE);
         }
-        if (lockedStatusBadge != null) {
-            lockedStatusBadge.setVisibility(View.VISIBLE);
-            handler.removeCallbacksAndMessages(null);
-            handler.postDelayed(() -> lockedStatusBadge.setVisibility(View.GONE), 2500);
+        if (swipeUnlockPill != null) {
+            swipeUnlockPill.setTranslationY(0f);
         }
+        showLockUiTemp(2500);
         CustomToast.showInfo(context, "Экран заблокирован");
 
         if (lockStateChangeListener != null) {
@@ -68,6 +107,16 @@ public class PlayerLockController {
 
     public void unlock() {
         isScreenLocked = false;
+        handler.removeCallbacks(hideLockUiRunnable);
+        if (lockedStatusBadge != null) {
+            lockedStatusBadge.animate().cancel();
+            lockedStatusBadge.setAlpha(1f);
+        }
+        if (swipeUnlockPill != null) {
+            swipeUnlockPill.animate().cancel();
+            swipeUnlockPill.setTranslationY(0f);
+            swipeUnlockPill.setAlpha(1f);
+        }
         if (layoutLockedOverlay != null) {
             layoutLockedOverlay.setVisibility(View.GONE);
         }
@@ -80,13 +129,13 @@ public class PlayerLockController {
 
     public void release() {
         handler.removeCallbacksAndMessages(null);
+        if (lockedStatusBadge != null) lockedStatusBadge.animate().cancel();
+        if (swipeUnlockPill != null) swipeUnlockPill.animate().cancel();
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private void setupLockOverlayGestures() {
         if (layoutLockedOverlay == null) return;
-
-        View swipeUnlockPill = layoutLockedOverlay.findViewById(com.example.animelib.R.id.swipeUnlockPill);
 
         layoutLockedOverlay.setOnTouchListener(new View.OnTouchListener() {
             private float downY = 0;
@@ -96,18 +145,15 @@ public class PlayerLockController {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         downY = event.getRawY();
-                        if (lockedStatusBadge != null) {
-                            lockedStatusBadge.setVisibility(View.VISIBLE);
-                            handler.removeCallbacksAndMessages(null);
-                            handler.postDelayed(() -> lockedStatusBadge.setVisibility(View.GONE), 2000);
-                        }
-                        if (swipeUnlockPill != null) {
-                            swipeUnlockPill.animate().cancel();
-                        }
+                        showLockUiTemp(2500);
                         return true;
 
                     case MotionEvent.ACTION_MOVE:
+                        handler.removeCallbacks(hideLockUiRunnable);
                         if (swipeUnlockPill != null) {
+                            swipeUnlockPill.animate().cancel();
+                            swipeUnlockPill.setAlpha(1f);
+                            swipeUnlockPill.setVisibility(View.VISIBLE);
                             float dy = downY - event.getRawY();
                             if (dy > 0) {
                                 swipeUnlockPill.setTranslationY(-dy);
@@ -122,11 +168,11 @@ public class PlayerLockController {
                         float deltaY = downY - event.getRawY();
                         if (deltaY > 120) {
                             unlock();
+                        } else {
                             if (swipeUnlockPill != null) {
-                                swipeUnlockPill.setTranslationY(0f);
+                                swipeUnlockPill.animate().translationY(0f).setDuration(220).start();
                             }
-                        } else if (swipeUnlockPill != null) {
-                            swipeUnlockPill.animate().translationY(0f).setDuration(220).start();
+                            showLockUiTemp(2500);
                         }
                         return true;
                 }

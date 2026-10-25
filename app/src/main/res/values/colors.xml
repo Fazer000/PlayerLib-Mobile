@@ -2,7 +2,7 @@
 <resources>
 
     <!-- ======================================================== -->
-    <!-- Primary App Accent (Change this to rebrand the entire app!) -->
+    <!-- Primary App Accent -->
     <!-- ======================================================== -->
     <color name="accent_color">#FF7A00</color>
     <color name="accent_color_alpha">#40FF7A00</color>
@@ -42,66 +42,49 @@
     <color name="bookmark_color">#ff9b40</color>
     <color name="secondary_color">@color/accent_color</color>
 
-    <!-- Text Colors (Unified - Light Theme Default) -->
-    <color name="app_text_primary">#FFFFFF</color>
-    <color name="app_text_secondary">#9CA3AF</color>
+    <!-- Text Colors (Light Theme Default) -->
+    <color name="app_text_primary">#111827</color>
+    <color name="app_text_secondary">#6B7280</color>
     <color name="app_text_brand_button">@color/accent_color</color>
-    <color name="app_text_accent_blue">#79A5D8</color>
+    <color name="app_text_accent_blue">#1D4ED8</color>
 
-    <!-- Dark Theme -->
-    <!-- General Colors -->
+    <!-- Dark Theme Specific Aliases -->
     <color name="dt_primary_color">#1C1C1E</color>
     <color name="dt_secondary_color">@color/accent_color</color>
     <color name="dt_blue_color">#2196f3</color>
     <color name="dt_alpha_primary_color">#30000000</color>
-
     <color name="dt_border_color">#2D2D36</color>
     <color name="dt_alpha_border_color">#70545458</color>
-
     <color name="dt_line_color">#2D2D36</color>
-
     <color name="dt_header_color">#1C1C1E</color>
-
-    <!-- Text Colors -->
     <color name="dt_primary_text_color">#FFFFFF</color>
     <color name="dt_secondary_text_color">#9CA3AF</color>
     <color name="dt_accent_text_color">#9CA3AF</color>
-    
-    <!-- Anime Info Colors -->
     <color name="dt_card_background">#252528</color>
     <color name="dt_bookmark_card_bg">#252528</color>
     <color name="dt_card_elevation">#40000000</color>
     <color name="dt_rating_star">#FFD700</color>
-    
-    <!-- Player Item Background -->
     <color name="dt_player_item_background">#252528</color>
-    
-    <!-- Related Titles Panel -->
     <color name="dt_related_panel_background">#1C1C1E</color>
     <color name="dt_related_title_color">#FFFFFF</color>
     <color name="dt_related_subtitle_color">#9CA3AF</color>
 
-
-    <!-- Light Theme -->
-    <!-- General Colors -->
-    <color name="lt_primary_color">#1C1C1E</color>
+    <!-- Light Theme Specific Colors -->
+    <color name="lt_primary_color">#F8F9FA</color>
     <color name="lt_secondary_color">@color/accent_color</color>
     <color name="lt_blue_color">#1976D2</color>
     <color name="lt_alpha_primary_color">@color/accent_color_alpha_10</color>
-
-    <color name="lt_border_color">#2D2D36</color>
+    <color name="lt_border_color">#E5E7EB</color>
     <color name="lt_alpha_border_color">#33E5E7EB</color>
-
-    <color name="lt_line_color">#2D2D36</color>
-
-    <color name="lt_header_color">#1C1C1E</color>
-    <color name="lt_webview_status_bar_color">#1C1C1E</color>
-    <color name="toolbar_header_bg">#1C1C1E</color>
+    <color name="lt_line_color">#E5E7EB</color>
+    <color name="lt_header_color">#F1F3F5</color>
+    <color name="lt_webview_status_bar_color">#F1F3F5</color>
+    <color name="toolbar_header_bg">#F1F3F5</color>
 
     <!-- Lib Site Header Colors (Light Theme) -->
-    <color name="site_header_animelib_light">#1C1C1E</color>
-    <color name="site_header_mangalib_light">#1C1C1E</color>
-    <color name="site_header_ranobelib_light">#1C1C1E</color>
+    <color name="site_header_animelib_light">#FFF4EB</color>
+    <color name="site_header_mangalib_light">#FFF4EB</color>
+    <color name="site_header_ranobelib_light">#FFF4EB</color>
 
     <!-- Text Colors -->
     <color name="lt_primary_text_color">@color/app_text_primary</color>
@@ -109,73 +92,73 @@
     <color name="lt_accent_text_color">@color/app_text_secondary</color>
     
     <!-- Anime Info Colors -->
-    <color name="lt_card_background">#252528</color>
+    <color name="lt_card_background">#FFFFFF</color>
     <color name="lt_card_elevation">#10000000</color>
     <color name="lt_rating_star">#FFA000</color>
     
     <!-- Player Item Background -->
-    <color name="lt_player_item_background">#252528</color>
+    <color name="lt_player_item_background">#FFFFFF</color>
     
     <!-- Related Titles Panel -->
-    <color name="lt_related_panel_background">#1C1C1E</color>
+    <color name="lt_related_panel_background">#F8F9FA</color>
     <color name="lt_related_title_color">@color/app_text_primary</color>
     <color name="lt_related_subtitle_color">@color/app_text_secondary</color>
 
     <!-- Resize mode cards -->
-    <color name="resize_card_selected_bg">@color/accent_secondary_dark</color>
+    <color name="resize_card_selected_bg">@color/accent_secondary</color>
     <color name="resize_card_selected_stroke">@color/accent_color</color>
-    <color name="resize_card_unselected_bg">#252528</color>
-    <color name="resize_card_unselected_stroke">#33333C</color>
-    <color name="resize_preview_inner_bg">#2A323D</color>
+    <color name="resize_card_unselected_bg">#FFFFFF</color>
+    <color name="resize_card_unselected_stroke">#E5E7EB</color>
+    <color name="resize_preview_inner_bg">#F1F5F9</color>
 
-    <!-- Semantic Theme Colors (Default Unified) -->
-    <color name="bs_bg_color">#1C1C1E</color>
-    <color name="bs_divider_color">#2D2D36</color>
-    <color name="card_bg_color">#252528</color>
+    <!-- Semantic Theme Colors (Default Light Theme) -->
+    <color name="bs_bg_color">#FFFFFF</color>
+    <color name="bs_divider_color">#E5E7EB</color>
+    <color name="card_bg_color">#FFFFFF</color>
     <color name="primary_text_color">@color/app_text_primary</color>
     <color name="secondary_text_color">@color/app_text_secondary</color>
     <color name="accent_text_color">@color/app_text_secondary</color>
-    <color name="comment_input_bg">#252528</color>
-    <color name="comment_input_stroke">#33333C</color>
-    <color name="chip_selected_bg">@color/accent_color</color>
+    <color name="comment_input_bg">#F3F4F6</color>
+    <color name="comment_input_stroke">#E5E7EB</color>
+    <color name="chip_selected_bg">@color/accent_secondary</color>
     <color name="chip_selected_stroke">@color/accent_color</color>
-    <color name="chip_unselected_bg">#252528</color>
-    <color name="chip_unselected_stroke">#33333C</color>
-    <color name="close_btn_bg">#20FFFFFF</color>
-    <color name="placeholder_bg">#252528</color>
-    <color name="stop_btn_bg">#2A1B20</color>
-    <color name="sort_popup_item_selected_bg">#2A2D37</color>
-    <color name="sort_popup_item_selected_text">#FFFFFF</color>
-    <color name="stop_btn_stroke">#4A2026</color>
-    <color name="stop_btn_text">#FF5252</color>
+    <color name="chip_unselected_bg">#F3F4F6</color>
+    <color name="chip_unselected_stroke">#E5E7EB</color>
+    <color name="close_btn_bg">#10000000</color>
+    <color name="placeholder_bg">#E5E7EB</color>
+    <color name="stop_btn_bg">#FEE2E2</color>
+    <color name="sort_popup_item_selected_bg">#FFF0E5</color>
+    <color name="sort_popup_item_selected_text">@color/accent_color</color>
+    <color name="stop_btn_stroke">#FCA5A5</color>
+    <color name="stop_btn_text">#DC2626</color>
 
     <!-- Player Episodes, Timecode, and Player Download Progress Colors -->
-    <color name="player_glass_bg">#4D0F121A</color>
-    <color name="player_item_inactive_text">#CBD5E1</color>
-    <color name="player_item_inactive_stroke">#33FFFFFF</color>
-    <color name="player_item_active_text">#FFFFFF</color>
+    <color name="player_glass_bg">#80FFFFFF</color>
+    <color name="player_item_inactive_text">#64748B</color>
+    <color name="player_item_inactive_stroke">#1A000000</color>
+    <color name="player_item_active_text">@color/accent_color</color>
     <color name="player_item_active_stroke">@color/accent_color</color>
 
-    <!-- Dialog Colors (Unified Defaults) -->
-    <color name="m3_item_bg">#252528</color>
-    <color name="dialog_bg">#1C1C1E</color>
-    <color name="dialog_card_bg">#252528</color>
-    <color name="dialog_input_bg">#252528</color>
-    <color name="dialog_input_stroke">#33333C</color>
+    <!-- Dialog Colors (Light Theme Defaults) -->
+    <color name="m3_item_bg">#FFFFFF</color>
+    <color name="dialog_bg">#FFFFFF</color>
+    <color name="dialog_card_bg">#F9FAFB</color>
+    <color name="dialog_input_bg">#F3F4F6</color>
+    <color name="dialog_input_stroke">#D1D5DB</color>
     <color name="dialog_text_title">@color/app_text_primary</color>
     <color name="dialog_text_body">@color/app_text_secondary</color>
     <color name="dialog_text_muted">@color/app_text_secondary</color>
-    <color name="dialog_text_hint">@color/app_text_secondary</color>
-    <color name="dialog_icon_close">#9CA3AF</color>
+    <color name="dialog_text_hint">#9CA3AF</color>
+    <color name="dialog_icon_close">#6B7280</color>
 
     <color name="dialog_danger_bg">#FEE2E2</color>
     <color name="dialog_danger_text">#DC2626</color>
     <color name="dialog_cancel_text">@color/app_text_secondary</color>
 
-    <color name="dialog_btn_neutral_bg">#E5E7EB</color>
+    <color name="dialog_btn_neutral_bg">#F3F4F6</color>
     <color name="dialog_btn_neutral_text">@color/app_text_primary</color>
 
-    <color name="dialog_btn_secondary_bg">#F9FAFB</color>
+    <color name="dialog_btn_secondary_bg">#FFFFFF</color>
     <color name="dialog_btn_secondary_stroke">#E5E7EB</color>
     <color name="dialog_btn_secondary_text">@color/app_text_secondary</color>
 
@@ -184,6 +167,6 @@
     <color name="dialog_rules_num_text">#FFFFFF</color>
 
     <!-- Playlist Card Stack Translucent Layers -->
-    <color name="playlist_stack_layer_1">#38000000</color>
-    <color name="playlist_stack_layer_2">#55000000</color>
+    <color name="playlist_stack_layer_1">#20000000</color>
+    <color name="playlist_stack_layer_2">#38000000</color>
 </resources>
