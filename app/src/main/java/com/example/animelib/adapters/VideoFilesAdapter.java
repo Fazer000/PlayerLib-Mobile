@@ -33,6 +33,8 @@ import java.util.concurrent.Executors;
 public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     public static final int VIEW_TYPE_HEADER = 0;
+    public static final int VIEW_TYPE_VIDEO_LIST = 1;
+    public static final int VIEW_TYPE_VIDEO_GRID = 2;
     public static final int VIEW_TYPE_VIDEO = 1;
 
     public static class DateHeader {
@@ -55,7 +57,19 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
     private final OnVideoClickListener listener;
 
     private boolean isSelectionMode = false;
+    private boolean isGridView = false;
     private final List<VideoItem> selectedVideos = new ArrayList<>();
+
+    public void setGridView(boolean gridView) {
+        if (this.isGridView != gridView) {
+            this.isGridView = gridView;
+            notifyDataSetChanged();
+        }
+    }
+
+    public boolean isGridView() {
+        return isGridView;
+    }
 
     private static final int CACHE_SIZE = 40 * 1024 * 1024; // 40MB memory cache
     private static final LruCache<String, Bitmap> thumbnailCache = new LruCache<String, Bitmap>(CACHE_SIZE) {
@@ -163,12 +177,13 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         notifyDataSetChanged();
     }
 
+
     @Override
     public int getItemViewType(int position) {
         if (items.get(position) instanceof DateHeader) {
             return VIEW_TYPE_HEADER;
         }
-        return VIEW_TYPE_VIDEO;
+        return isGridView ? VIEW_TYPE_VIDEO_GRID : VIEW_TYPE_VIDEO_LIST;
     }
 
     @NonNull
@@ -177,6 +192,9 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         if (viewType == VIEW_TYPE_HEADER) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_video_date_header, parent, false);
             return new DateHeaderViewHolder(view);
+        } else if (viewType == VIEW_TYPE_VIDEO_GRID) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_video_grid, parent, false);
+            return new VideoViewHolder(view);
         } else {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_video_card, parent, false);
             return new VideoViewHolder(view);
@@ -202,7 +220,14 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         VideoViewHolder holder = (VideoViewHolder) rawHolder;
         VideoItem video = (VideoItem) itemObj;
 
-        holder.tvVideoTitle.setText(video.getDisplayTitle());
+        if (holder.tvVideoTitle != null) {
+            if (isGridView) {
+                holder.tvVideoTitle.setVisibility(View.GONE);
+            } else {
+                holder.tvVideoTitle.setText(video.getDisplayTitle());
+                holder.tvVideoTitle.setVisibility(View.VISIBLE);
+            }
+        }
 
         // "НОВОЕ" Tag
         if (holder.tvVideoNewTag != null) {
@@ -212,34 +237,65 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         // Extension Tag
         String extension = video.getFileExtension();
         if (holder.tvVideoExtensionTag != null) {
-            if (!extension.isEmpty() && extension.length() <= 5) {
-                holder.tvVideoExtensionTag.setText(extension);
-                holder.tvVideoExtensionTag.setVisibility(View.VISIBLE);
-            } else {
+            if (isGridView) {
                 holder.tvVideoExtensionTag.setVisibility(View.GONE);
+            } else {
+                if (!extension.isEmpty() && extension.length() <= 5) {
+                    holder.tvVideoExtensionTag.setText(extension);
+                    holder.tvVideoExtensionTag.setVisibility(View.VISIBLE);
+                } else {
+                    holder.tvVideoExtensionTag.setVisibility(View.GONE);
+                }
             }
         }
 
-        holder.tvVideoDuration.setText(video.getFormattedDuration());
-        holder.tvVideoFolder.setText(video.getFolderName());
-        String sizeStr = video.getFormattedSize();
-        String dateStr = video.getFormattedDate();
-        if (!sizeStr.isEmpty() && !dateStr.isEmpty()) {
-            holder.tvVideoSize.setText(sizeStr + " • " + dateStr);
-        } else if (!sizeStr.isEmpty()) {
-            holder.tvVideoSize.setText(sizeStr);
-        } else {
-            holder.tvVideoSize.setText(dateStr);
+        if (holder.tvVideoDuration != null) {
+            holder.tvVideoDuration.setText(video.getFormattedDuration());
+            holder.tvVideoDuration.setVisibility(View.VISIBLE);
+        }
+
+        if (holder.tvVideoFolder != null) {
+            if (isGridView) {
+                holder.tvVideoFolder.setVisibility(View.GONE);
+            } else {
+                holder.tvVideoFolder.setText(video.getFolderName());
+                holder.tvVideoFolder.setVisibility(View.VISIBLE);
+            }
+        }
+
+        if (holder.tvVideoSize != null) {
+            if (isGridView) {
+                holder.tvVideoSize.setVisibility(View.GONE);
+            } else {
+                String sizeStr = video.getFormattedSize();
+                String dateStr = video.getFormattedDate();
+                if (!sizeStr.isEmpty() && !dateStr.isEmpty()) {
+                    holder.tvVideoSize.setText(sizeStr + " • " + dateStr);
+                } else if (!sizeStr.isEmpty()) {
+                    holder.tvVideoSize.setText(sizeStr);
+                } else {
+                    holder.tvVideoSize.setText(dateStr);
+                }
+                holder.tvVideoSize.setVisibility(View.VISIBLE);
+            }
         }
 
         if (video.getProgressPercent() > 0) {
-            holder.pbWatchProgress.setVisibility(View.VISIBLE);
-            holder.pbWatchProgress.setProgress(video.getProgressPercent(), false);
-            holder.tvWatchProgressStatus.setVisibility(View.VISIBLE);
-            holder.tvWatchProgressStatus.setText(video.getProgressPercent() + "%");
+            if (holder.pbWatchProgress != null) {
+                holder.pbWatchProgress.setVisibility(View.VISIBLE);
+                holder.pbWatchProgress.setProgress(video.getProgressPercent(), false);
+            }
+            if (holder.tvWatchProgressStatus != null) {
+                holder.tvWatchProgressStatus.setVisibility(View.VISIBLE);
+                holder.tvWatchProgressStatus.setText(video.getProgressPercent() + "%");
+            }
         } else {
-            holder.pbWatchProgress.setVisibility(View.GONE);
-            holder.tvWatchProgressStatus.setVisibility(View.GONE);
+            if (holder.pbWatchProgress != null) {
+                holder.pbWatchProgress.setVisibility(View.GONE);
+            }
+            if (holder.tvWatchProgressStatus != null) {
+                holder.tvWatchProgressStatus.setVisibility(View.GONE);
+            }
         }
 
         int selectionIndex = -1;
@@ -253,16 +309,20 @@ public class VideoFilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
             }
         }
 
-        if (selectionIndex >= 0) {
-            holder.tvSelectionBadge.setVisibility(View.VISIBLE);
-            holder.tvSelectionBadge.setText(String.valueOf(selectionIndex + 1));
-            holder.itemView.setAlpha(1.0f);
-        } else if (isSelectionMode) {
-            holder.tvSelectionBadge.setVisibility(View.VISIBLE);
-            holder.tvSelectionBadge.setText("");
-            holder.itemView.setAlpha(0.6f);
+        if (holder.tvSelectionBadge != null) {
+            if (selectionIndex >= 0) {
+                holder.tvSelectionBadge.setVisibility(View.VISIBLE);
+                holder.tvSelectionBadge.setText(String.valueOf(selectionIndex + 1));
+                holder.itemView.setAlpha(1.0f);
+            } else if (isSelectionMode) {
+                holder.tvSelectionBadge.setVisibility(View.VISIBLE);
+                holder.tvSelectionBadge.setText("");
+                holder.itemView.setAlpha(0.6f);
+            } else {
+                holder.tvSelectionBadge.setVisibility(View.GONE);
+                holder.itemView.setAlpha(1.0f);
+            }
         } else {
-            holder.tvSelectionBadge.setVisibility(View.GONE);
             holder.itemView.setAlpha(1.0f);
         }
 

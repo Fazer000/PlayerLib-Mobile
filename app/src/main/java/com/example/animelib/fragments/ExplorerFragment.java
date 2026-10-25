@@ -111,6 +111,7 @@ public class ExplorerFragment extends Fragment {
     private String currentSearchQuery = "";
     private VideoListFilter.SortOrder currentSortOrder = VideoListFilter.SortOrder.DATE_DESC;
     private boolean isPlaylistCreationMode = false;
+    private boolean isGridViewMode = false;
 
     private ActivityResultLauncher<String[]> permissionLauncher;
 
@@ -247,17 +248,19 @@ public class ExplorerFragment extends Fragment {
         btnLastPlayedPlaylistCard = view.findViewById(R.id.btnLastPlayedPlaylistCard);
         btnLastPlayedPlaylist = view.findViewById(R.id.btnLastPlayedPlaylist);
 
-        setupRecyclerViews();
-        setupListeners();
-        loadAndDisplayLastPlayedVideo();
-
         try {
             SharedPreferences prefs = requireContext().getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE);
             String savedSort = prefs.getString("explorer_sort_order", VideoListFilter.SortOrder.DATE_DESC.name());
             currentSortOrder = VideoListFilter.SortOrder.valueOf(savedSort);
+            isGridViewMode = prefs.getBoolean("explorer_is_grid_view", false);
         } catch (Exception e) {
             currentSortOrder = VideoListFilter.SortOrder.DATE_DESC;
+            isGridViewMode = false;
         }
+
+        setupRecyclerViews();
+        setupListeners();
+        loadAndDisplayLastPlayedVideo();
 
         if (hasStoragePermission()) {
             loadVideosFromStorage();
@@ -287,7 +290,8 @@ public class ExplorerFragment extends Fragment {
                 : (int) (64 * density);
         int totalBottomPadding = targetBottomMargin + bottomControlsHeight + (int) (16 * density);
 
-        rvVideos.setPadding(0, totalTopPadding, 0, totalBottomPadding);
+        int horizontalPadding = isGridViewMode ? (int) (9 * density) : 0;
+        rvVideos.setPadding(horizontalPadding, totalTopPadding, horizontalPadding, totalBottomPadding);
         rvVideos.setClipToPadding(false);
         rvVideos.setClipChildren(false);
     }
@@ -377,7 +381,6 @@ public class ExplorerFragment extends Fragment {
         });
         rvFolders.setAdapter(videoFoldersAdapter);
 
-        rvVideos.setLayoutManager(new LinearLayoutManager(requireContext()));
         videoFilesAdapter = new VideoFilesAdapter(displayedVideos, new VideoFilesAdapter.OnVideoClickListener() {
             @Override
             public void onVideoClick(VideoItem video, int position) {
@@ -394,6 +397,7 @@ public class ExplorerFragment extends Fragment {
                 showVideoOptionsBottomSheet(video);
             }
         });
+        updateLayoutManager();
         rvVideos.setAdapter(videoFilesAdapter);
 
         if (swipeRefreshLayout != null) {
@@ -402,6 +406,43 @@ public class ExplorerFragment extends Fragment {
                 swipeRefreshLayout.setRefreshing(false);
             });
         }
+    }
+
+    private void updateLayoutManager() {
+        if (rvVideos == null || getContext() == null) return;
+        if (isGridViewMode) {
+            androidx.recyclerview.widget.GridLayoutManager glm = new androidx.recyclerview.widget.GridLayoutManager(requireContext(), 3);
+            glm.setSpanSizeLookup(new androidx.recyclerview.widget.GridLayoutManager.SpanSizeLookup() {
+                @Override
+                public int getSpanSize(int position) {
+                    if (videoFilesAdapter != null && videoFilesAdapter.getItemViewType(position) == VideoFilesAdapter.VIEW_TYPE_HEADER) {
+                        return 3;
+                    }
+                    return 1;
+                }
+            });
+            rvVideos.setLayoutManager(glm);
+        } else {
+            rvVideos.setLayoutManager(new LinearLayoutManager(requireContext()));
+        }
+        if (videoFilesAdapter != null) {
+            videoFilesAdapter.setGridView(isGridViewMode);
+        }
+        applyListPaddings();
+    }
+
+    private void setGridViewMode(boolean isGrid) {
+        if (this.isGridViewMode == isGrid) return;
+        this.isGridViewMode = isGrid;
+        if (getContext() != null) {
+            try {
+                requireContext().getSharedPreferences("app_settings_prefs", Context.MODE_PRIVATE)
+                        .edit()
+                        .putBoolean("explorer_is_grid_view", isGridViewMode)
+                        .apply();
+            } catch (Exception ignored) {}
+        }
+        updateLayoutManager();
     }
 
     private void setupListeners() {
@@ -782,11 +823,45 @@ public class ExplorerFragment extends Fragment {
             setupSortItem(popupView, popupWindow, R.id.popup_sort_size_desc, R.id.iv_check_size_desc, R.id.tv_title_size_desc, R.id.iv_icon_size_desc, VideoListFilter.SortOrder.SIZE_DESC);
             setupSortItem(popupView, popupWindow, R.id.popup_sort_size_asc, R.id.iv_check_size_asc, R.id.tv_title_size_asc, R.id.iv_icon_size_asc, VideoListFilter.SortOrder.SIZE_ASC);
 
+            setupViewModeItem(popupView, popupWindow, R.id.popup_view_mode_list, R.id.iv_check_view_list, R.id.tv_title_view_list, R.id.iv_icon_view_list, false);
+            setupViewModeItem(popupView, popupWindow, R.id.popup_view_mode_grid, R.id.iv_check_view_grid, R.id.tv_title_view_grid, R.id.iv_icon_view_grid, true);
+
             int xOffset = -(width - anchorView.getWidth());
             int yOffset = (int) (6 * density);
             popupWindow.showAsDropDown(anchorView, xOffset, yOffset);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void setupViewModeItem(View popupView, PopupWindow popupWindow, int itemId, int checkId, int titleId, int iconId, boolean isGridTarget) {
+        View item = popupView.findViewById(itemId);
+        View check = popupView.findViewById(checkId);
+        TextView title = popupView.findViewById(titleId);
+        ImageView icon = popupView.findViewById(iconId);
+
+        boolean isSelected = (isGridViewMode == isGridTarget);
+        if (check != null) {
+            check.setVisibility(isSelected ? View.VISIBLE : View.GONE);
+        }
+        if (title != null && getContext() != null) {
+            int color = isSelected
+                    ? ContextCompat.getColor(requireContext(), R.color.accent_color)
+                    : ContextCompat.getColor(requireContext(), R.color.primary_text_color);
+            title.setTextColor(color);
+        }
+        if (icon != null && getContext() != null) {
+            int color = isSelected
+                    ? ContextCompat.getColor(requireContext(), R.color.accent_color)
+                    : ContextCompat.getColor(requireContext(), R.color.primary_text_color);
+            icon.setImageTintList(android.content.res.ColorStateList.valueOf(color));
+        }
+
+        if (item != null) {
+            item.setOnClickListener(v -> {
+                popupWindow.dismiss();
+                setGridViewMode(isGridTarget);
+            });
         }
     }
 
