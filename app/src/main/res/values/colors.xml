@@ -135,6 +135,8 @@
     <!-- Player Episodes, Timecode, and Player Download Progress Colors -->
     <color name="player_glass_bg">#80FFFFFF</color>
     <color name="player_item_inactive_text">#64748B</color>
+    <color name="player_gesture_track_bg">#40CBD5E1</color>
+    <color name="player_splash_logo_a">#1E1B26</color>
     <color name="player_item_inactive_stroke">#1A000000</color>
     <color name="player_item_active_text">@color/accent_color</color>
     <color name="player_item_active_stroke">@color/accent_color</color>

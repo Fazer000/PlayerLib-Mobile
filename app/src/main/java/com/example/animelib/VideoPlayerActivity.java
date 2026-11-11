@@ -107,6 +107,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
     private ImageButton btnClose;
     private ImageButton btnSettings;
     private ImageButton btnPip;
+    private ImageButton btnPlayPause;
+    private com.example.animelib.ui.PlayPauseDrawable playPauseDrawable;
     private ImageButton btnPlay;
     private ImageButton btnPause;
     private ImageButton btnPrev;
@@ -214,8 +216,13 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
         btnClose = findViewById(R.id.ibClosePlayer);
         btnSettings = findViewById(R.id.settingsButton);
         btnPip = findViewById(R.id.pipButton);
+        btnPlayPause = findViewById(R.id.btnPlayerPlayPause);
         btnPlay = findViewById(R.id.btnPlayerPlay);
         btnPause = findViewById(R.id.btnPlayerPause);
+        if (btnPlayPause != null) {
+            playPauseDrawable = new com.example.animelib.ui.PlayPauseDrawable(android.graphics.Color.WHITE);
+            btnPlayPause.setImageDrawable(playPauseDrawable);
+        }
         btnPrev = findViewById(R.id.prevEpisodeButton);
         btnNext = findViewById(R.id.nextEpisodeButton);
         btnSkipForward = findViewById(R.id.skipForwardButton);
@@ -267,12 +274,11 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
 
         View ambientContainer = findViewById(R.id.ambientContainer);
         PlayerView ambientPlayerView = findViewById(R.id.ambientPlayerView);
-        ImageView ambientImageView = findViewById(R.id.ambientImageView);
         AmbientVignetteOverlayView ambientVignette = findViewById(R.id.ambientVignetteOverlay);
 
         if (ambientContainer != null) {
             ambientLightManager = new AmbientLightManager(this, playerView, ambientContainer,
-                    ambientPlayerView, ambientImageView, ambientVignette);
+                    ambientPlayerView, ambientVignette);
             ambientLightManager.setEnabled(true);
             databaseManager.saveAmbientLightSetting(true);
         }
@@ -294,8 +300,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
         gestureController = new PlayerGestureController(
                 this,
                 playerView,
-                findViewById(R.id.seekPreviewText),
-                findViewById(R.id.holdSpeedToast),
+                findViewById(R.id.seekPreviewPlaque),
+                findViewById(R.id.holdSpeedPlaque),
                 findViewById(R.id.skipIndicatorLeft),
                 findViewById(R.id.skipTextLeft),
                 findViewById(R.id.skipIndicatorRight),
@@ -322,6 +328,22 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
         });
         if (btnLockScreen != null) btnLockScreen.setOnClickListener(v -> lockController.lock());
 
+        if (btnPlayPause != null) {
+            btnPlayPause.setOnClickListener(v -> {
+                if (player != null) {
+                    if (player.getPlaybackState() == Player.STATE_ENDED) {
+                        player.seekTo(0);
+                        player.play();
+                    } else if (player.isPlaying() || player.getPlayWhenReady()) {
+                        player.pause();
+                    } else {
+                        player.play();
+                    }
+                    updatePlayPauseButtons(player.isPlaying() || player.getPlayWhenReady());
+                    if (playerView != null) playerView.showController();
+                }
+            });
+        }
         if (btnPlay != null) {
             btnPlay.setOnClickListener(v -> {
                 if (player != null) {
@@ -692,43 +714,14 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
     }
 
     private void updatePlayPauseButtons(boolean isPlaying) {
-        if (btnPlay == null || btnPause == null) return;
-
-        View showView = isPlaying ? btnPause : btnPlay;
-        View hideView = isPlaying ? btnPlay : btnPause;
-
-        if (showView.getVisibility() == View.VISIBLE && showView.getAlpha() == 1.0f && hideView.getVisibility() == View.GONE) {
-            return;
+        if (playPauseDrawable != null) {
+            playPauseDrawable.setPause(isPlaying, true);
         }
-
-        hideView.animate().cancel();
-        showView.animate().cancel();
-
-        hideView.animate()
-                .alpha(0f)
-                .scaleX(0.5f)
-                .scaleY(0.5f)
-                .setDuration(150)
-                .setInterpolator(new AccelerateInterpolator())
-                .withEndAction(() -> {
-                    hideView.setVisibility(View.GONE);
-                    hideView.setScaleX(1f);
-                    hideView.setScaleY(1f);
-                    hideView.setAlpha(1f);
-                })
-                .start();
-
-        showView.setVisibility(View.VISIBLE);
-        showView.setAlpha(0f);
-        showView.setScaleX(0.5f);
-        showView.setScaleY(0.5f);
-        showView.animate()
-                .alpha(1f)
-                .scaleX(1.0f)
-                .scaleY(1.0f)
-                .setDuration(220)
-                .setInterpolator(new OvershootInterpolator(1.4f))
-                .start();
+        if (btnPlayPause != null) {
+            btnPlayPause.setVisibility(View.VISIBLE);
+        }
+        if (btnPlay != null) btnPlay.setVisibility(View.GONE);
+        if (btnPause != null) btnPause.setVisibility(View.GONE);
     }
 
     private void animateControlsVisibility(boolean isVisible) {
@@ -1089,32 +1082,8 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
             }
         }
 
-        AmbientVignetteOverlayView ambientVignetteOverlay = findViewById(R.id.ambientVignetteOverlay);
-
-        if (ambientVignetteOverlay != null) {
-            ambientVignetteOverlay.setPortraitMode(!isLandscape);
-        }
-
-        if (ambientContainer != null) {
-            FrameLayout.LayoutParams ambParams = (FrameLayout.LayoutParams) ambientContainer.getLayoutParams();
-            if (isLandscape) {
-                ambParams.width = FrameLayout.LayoutParams.MATCH_PARENT;
-                ambParams.height = FrameLayout.LayoutParams.MATCH_PARENT;
-                ambParams.topMargin = 0;
-                ambParams.leftMargin = 0;
-                ambParams.rightMargin = 0;
-                ambParams.bottomMargin = 0;
-            } else {
-                int topMargin = statusBarHeight > 0 ? statusBarHeight : dpToPx(24);
-
-                ambParams.width = FrameLayout.LayoutParams.MATCH_PARENT;
-                ambParams.height = topMargin + dpToPx(48);
-                ambParams.topMargin = 0;
-                ambParams.leftMargin = 0;
-                ambParams.rightMargin = 0;
-                ambParams.bottomMargin = 0;
-            }
-            ambientContainer.setLayoutParams(ambParams);
+        if (ambientLightManager != null) {
+            ambientLightManager.onConfigurationChanged();
         }
 
         updatePlayerTitles();
@@ -1229,6 +1198,9 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
     @Override
     protected void onResume() {
         super.onResume();
+        if (ambientLightManager != null) {
+            ambientLightManager.onResume();
+        }
         if (systemUiController != null) {
             if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 systemUiController.hideSystemUI();
@@ -1360,6 +1332,9 @@ public class VideoPlayerActivity extends AppCompatActivity implements PlayerGest
     @Override
     protected void onPause() {
         super.onPause();
+        if (ambientLightManager != null) {
+            ambientLightManager.onPause();
+        }
         stopTimebarUpdates();
         saveCurrentPosition();
         if (player != null && !isInPictureInPictureMode()) {

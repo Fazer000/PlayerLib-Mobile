@@ -15,7 +15,6 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -23,11 +22,14 @@ import androidx.annotation.Nullable;
 import androidx.media3.ui.PlayerView;
 
 import com.example.animelib.R;
+import com.example.animelib.ui.M3LinearProgressIndicator;
+import com.example.animelib.util.GesturePlaqueAnimationHelper;
 
 import java.util.Locale;
 
 /**
  * Контроллер жестов воспроизведения видео (яркость, громкость, перемотка свайпом, 2x скорость, двойной тап).
+ * Использует централизованный GesturePlaqueAnimationHelper для плавных кинематографичных анимаций появления/исчезновения.
  */
 public class PlayerGestureController {
 
@@ -49,20 +51,31 @@ public class PlayerGestureController {
     private final AudioManager audioManager;
     private final int maxVolume;
 
-    // UI Overlays
-    private final TextView seekPreviewText;
+    // UI Overlays - Seek Plaque
+    private final View seekPreviewPlaque;
+    private final ImageView seekPreviewIcon;
+    private final TextView seekPreviewOffset;
+    private final TextView seekPreviewTime;
+    private final TextView seekPreviewDuration;
+
+    // UI Overlays - Hold Speed Plaque
+    private final View holdSpeedPlaque;
+    private final ImageView holdSpeedIcon;
     private final TextView holdSpeedToast;
+
+    // UI Overlays - Double Tap Skip
     private final LinearLayout skipIndicatorLeft;
     private final TextView skipTextLeft;
+    private final ImageView skipIconLeft;
     private final LinearLayout skipIndicatorRight;
     private final TextView skipTextRight;
-    private final LinearLayout gestureIndicatorPlaque;
-    private final ImageView gestureIndicatorIcon;
-    private final ProgressBar gestureIndicatorProgress;
-    private final TextView gestureIndicatorText;
-
-    private final ImageView skipIconLeft;
     private final ImageView skipIconRight;
+
+    // UI Overlays - Brightness / Volume Plaque
+    private final View gestureIndicatorPlaque;
+    private final ImageView gestureIndicatorIcon;
+    private final M3LinearProgressIndicator gestureIndicatorProgress;
+    private final TextView gestureIndicatorText;
 
     // Gesture State
     private float touchStartX = -1f, touchStartY = -1f;
@@ -76,52 +89,87 @@ public class PlayerGestureController {
 
     private final Handler holdSpeedHandler = new Handler(Looper.getMainLooper());
     private final Handler hidePlaqueHandler = new Handler(Looper.getMainLooper());
+    private final Runnable hideGestureIndicatorRunnable;
+    private final Runnable hideSeekPreviewRunnable;
+    private Runnable hideLeftSkipRunnable = null;
+    private Runnable hideRightSkipRunnable = null;
 
     public PlayerGestureController(@NonNull Activity activity,
                                    @NonNull PlayerView playerView,
-                                   @Nullable TextView seekPreviewText,
-                                   @Nullable TextView holdSpeedToast,
+                                   @Nullable View seekPreviewPlaque,
+                                   @Nullable View holdSpeedPlaque,
                                    @Nullable LinearLayout skipIndicatorLeft,
                                    @Nullable TextView skipTextLeft,
                                    @Nullable LinearLayout skipIndicatorRight,
                                    @Nullable TextView skipTextRight,
-                                   @Nullable LinearLayout gestureIndicatorPlaque,
+                                   @Nullable View gestureIndicatorPlaque,
                                    @Nullable ImageView gestureIndicatorIcon,
-                                   @Nullable ProgressBar gestureIndicatorProgress,
+                                   @Nullable M3LinearProgressIndicator gestureIndicatorProgress,
                                    @Nullable TextView gestureIndicatorText,
                                    @NonNull GestureCallback callback) {
         this.activity = activity;
         this.playerView = playerView;
-        this.seekPreviewText = seekPreviewText;
-        this.holdSpeedToast = holdSpeedToast;
+        this.seekPreviewPlaque = seekPreviewPlaque;
+        if (seekPreviewPlaque != null) {
+            this.seekPreviewIcon = seekPreviewPlaque.findViewById(R.id.seekPreviewIcon);
+            this.seekPreviewOffset = seekPreviewPlaque.findViewById(R.id.seekPreviewOffset);
+            this.seekPreviewTime = seekPreviewPlaque.findViewById(R.id.seekPreviewTime);
+            this.seekPreviewDuration = seekPreviewPlaque.findViewById(R.id.seekPreviewDuration);
+        } else {
+            this.seekPreviewIcon = null;
+            this.seekPreviewOffset = null;
+            this.seekPreviewTime = null;
+            this.seekPreviewDuration = null;
+        }
+
+        this.holdSpeedPlaque = holdSpeedPlaque;
+        if (holdSpeedPlaque != null) {
+            this.holdSpeedIcon = holdSpeedPlaque.findViewById(R.id.holdSpeedIcon);
+            this.holdSpeedToast = holdSpeedPlaque instanceof TextView ? (TextView) holdSpeedPlaque : holdSpeedPlaque.findViewById(R.id.holdSpeedToast);
+        } else {
+            this.holdSpeedIcon = null;
+            this.holdSpeedToast = null;
+        }
+
         this.skipIndicatorLeft = skipIndicatorLeft;
         this.skipTextLeft = skipTextLeft;
+        this.skipIconLeft = skipIndicatorLeft != null ? skipIndicatorLeft.findViewById(R.id.skipIconLeft) : null;
+
         this.skipIndicatorRight = skipIndicatorRight;
         this.skipTextRight = skipTextRight;
-        this.skipIconLeft = skipIndicatorLeft != null ? skipIndicatorLeft.findViewById(R.id.skipIconLeft) : null;
         this.skipIconRight = skipIndicatorRight != null ? skipIndicatorRight.findViewById(R.id.skipIconRight) : null;
+
         this.gestureIndicatorPlaque = gestureIndicatorPlaque;
         this.gestureIndicatorIcon = gestureIndicatorIcon;
         this.gestureIndicatorProgress = gestureIndicatorProgress;
         this.gestureIndicatorText = gestureIndicatorText;
+        if (this.gestureIndicatorText != null) {
+            // Стабилизируем ширину индикатора, чтобы числовые проценты не вызывали микро-дергания плашки
+            int maxPercentWidth = (int) Math.ceil(this.gestureIndicatorText.getPaint().measureText("100%"));
+            this.gestureIndicatorText.setWidth(maxPercentWidth);
+        }
+
         this.callback = callback;
 
         this.audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
         this.maxVolume = audioManager != null ? audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC) : 15;
+
+        this.hideGestureIndicatorRunnable = () -> GesturePlaqueAnimationHelper.hide(this.gestureIndicatorPlaque);
+        this.hideSeekPreviewRunnable = () -> GesturePlaqueAnimationHelper.hide(this.seekPreviewPlaque);
 
         setupGestureListeners();
     }
 
     /**
      * Динамически перестраивает размеры и отступы плашек перемотки, зажатия 2x и жестов
-     * в зависимости от ориентации экрана (компактные в портретном режиме, полноразмерные в ландшафтном).
+     * в зависимости от ориентации экрана.
      */
     public void updateOrientation(boolean isLandscape) {
         float density = activity.getResources().getDisplayMetrics().density;
 
         // 1. Двойной тап (перемотка назад и вперед)
-        int skipMargin = (int) ((isLandscape ? 120 : 32) * density);
-        int iconSize = (int) ((isLandscape ? 56 : 36) * density);
+        int skipMargin = (int) ((isLandscape ? 130 : 32) * density);
+        int iconSize = (int) ((isLandscape ? 64 : 36) * density);
         float skipTextSize = isLandscape ? 14f : 11.5f;
         int skipTextPadH = (int) ((isLandscape ? 12 : 8) * density);
         int skipTextPadV = (int) ((isLandscape ? 6 : 2) * density);
@@ -171,53 +219,35 @@ public class PlayerGestureController {
             }
         }
 
-        // 2. Плашка перемотки свайпом (драгом)
-        if (seekPreviewText != null) {
-            if (seekPreviewText.getLayoutParams() instanceof FrameLayout.LayoutParams) {
-                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) seekPreviewText.getLayoutParams();
-                lp.topMargin = (int) ((isLandscape ? 70 : 18) * density);
+        // 2. Плашка перемотки свайпом
+        if (seekPreviewPlaque != null) {
+            if (seekPreviewPlaque.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) seekPreviewPlaque.getLayoutParams();
+                lp.topMargin = (int) ((isLandscape ? 80 : 18) * density);
                 lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
-                seekPreviewText.setLayoutParams(lp);
+                seekPreviewPlaque.setLayoutParams(lp);
             }
-            seekPreviewText.setTextSize(isLandscape ? 15f : 12.5f);
-            int padH = (int) ((isLandscape ? 14 : 10) * density);
-            int padV = (int) ((isLandscape ? 8 : 4) * density);
-            seekPreviewText.setPadding(padH, padV, padH, padV);
         }
 
-        // 3. Плашка скорости при зажатии (2x)
-        if (holdSpeedToast != null) {
-            if (holdSpeedToast.getLayoutParams() instanceof FrameLayout.LayoutParams) {
-                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) holdSpeedToast.getLayoutParams();
-                lp.topMargin = (int) ((isLandscape ? 70 : 14) * density);
+        // 3. Плашка скорости при зажатии
+        if (holdSpeedPlaque != null) {
+            if (holdSpeedPlaque.getLayoutParams() instanceof FrameLayout.LayoutParams) {
+                FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) holdSpeedPlaque.getLayoutParams();
+                lp.topMargin = (int) ((isLandscape ? 80 : 14) * density);
                 lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
-                holdSpeedToast.setLayoutParams(lp);
+                holdSpeedPlaque.setLayoutParams(lp);
             }
-            holdSpeedToast.setTextSize(isLandscape ? 16f : 12.5f);
-            int padH = (int) ((isLandscape ? 16 : 10) * density);
-            int padV = (int) ((isLandscape ? 4 : 3) * density);
-            holdSpeedToast.setPadding(padH, padV, padH, padV);
         }
 
         // 4. Плашка громкости и яркости
         if (gestureIndicatorPlaque != null) {
             if (gestureIndicatorPlaque.getLayoutParams() instanceof FrameLayout.LayoutParams) {
                 FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) gestureIndicatorPlaque.getLayoutParams();
-                lp.topMargin = (int) ((isLandscape ? 70 : 16) * density);
-                lp.width = (int) ((isLandscape ? 160 : 125) * density);
+                lp.topMargin = (int) ((isLandscape ? 80 : 16) * density);
+                lp.width = (int) ((isLandscape ? 172 : 130) * density);
                 lp.height = (int) ((isLandscape ? 36 : 28) * density);
                 lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
                 gestureIndicatorPlaque.setLayoutParams(lp);
-            }
-            if (gestureIndicatorIcon != null) {
-                ViewGroup.LayoutParams lp = gestureIndicatorIcon.getLayoutParams();
-                int iconD = (int) ((isLandscape ? 20 : 16) * density);
-                lp.width = iconD;
-                lp.height = iconD;
-                gestureIndicatorIcon.setLayoutParams(lp);
-            }
-            if (gestureIndicatorText != null) {
-                gestureIndicatorText.setTextSize(isLandscape ? 13f : 11f);
             }
         }
     }
@@ -225,6 +255,11 @@ public class PlayerGestureController {
     public void release() {
         holdSpeedHandler.removeCallbacksAndMessages(null);
         hidePlaqueHandler.removeCallbacksAndMessages(null);
+        GesturePlaqueAnimationHelper.hideImmediate(seekPreviewPlaque);
+        GesturePlaqueAnimationHelper.hideImmediate(holdSpeedPlaque);
+        GesturePlaqueAnimationHelper.hideImmediate(gestureIndicatorPlaque);
+        GesturePlaqueAnimationHelper.hideImmediate(skipIndicatorLeft);
+        GesturePlaqueAnimationHelper.hideImmediate(skipIndicatorRight);
     }
 
     private float initialBrightness = 0.5f;
@@ -245,18 +280,17 @@ public class PlayerGestureController {
             public boolean onDoubleTap(@NonNull MotionEvent e) {
                 if (callback.isLocked()) return false;
                 int width = playerView.getWidth();
-                int seekSec = 10;
+                int seekSec = callback.getSkipDurationSeconds();
+                if (seekSec <= 0) seekSec = 10;
                 long currentPos = callback.getCurrentPosition();
                 long duration = callback.getDuration();
 
                 if (e.getX() < width / 3.0f) {
-                    // Double tap left: rewind 10 seconds
                     long newPos = Math.max(0, currentPos - (seekSec * 1000L));
                     callback.onSeekCommit(newPos);
                     showDoubleTapSkipIndicator(false, seekSec);
                     return true;
                 } else if (e.getX() > (width * 2.0f / 3.0f)) {
-                    // Double tap right: forward 10 seconds
                     long newPos = Math.min(duration, currentPos + (seekSec * 1000L));
                     callback.onSeekCommit(newPos);
                     showDoubleTapSkipIndicator(true, seekSec);
@@ -280,8 +314,9 @@ public class PlayerGestureController {
             // Ignore touches starting in the top dead zone (notification shade area)
             if (touchStartY >= 0 && touchStartY < topDeadZonePx) {
                 holdSpeedHandler.removeCallbacksAndMessages(null);
-                if (gestureIndicatorPlaque != null) gestureIndicatorPlaque.setVisibility(View.GONE);
-                if (seekPreviewText != null) seekPreviewText.setVisibility(View.GONE);
+                hidePlaqueHandler.removeCallbacksAndMessages(null);
+                GesturePlaqueAnimationHelper.hideImmediate(gestureIndicatorPlaque);
+                GesturePlaqueAnimationHelper.hideImmediate(seekPreviewPlaque);
                 return false;
             }
 
@@ -309,9 +344,9 @@ public class PlayerGestureController {
                             holdStartX = touchStartX;
                             callback.onHoldSpeed(true);
                             if (holdSpeedToast != null) {
-                                holdSpeedToast.setText("2.0x");
-                                holdSpeedToast.setVisibility(View.VISIBLE);
+                                holdSpeedToast.setText("2x");
                             }
+                            GesturePlaqueAnimationHelper.show(holdSpeedPlaque);
                         }
                     }, 500);
                     return true;
@@ -324,7 +359,6 @@ public class PlayerGestureController {
                         callback.onHoldSpeedChanged(adjustedSpeed);
                         if (holdSpeedToast != null) {
                             holdSpeedToast.setText(String.format(Locale.US, "%.1fx", adjustedSpeed));
-                            holdSpeedToast.setVisibility(View.VISIBLE);
                         }
                         return true;
                     }
@@ -371,9 +405,7 @@ public class PlayerGestureController {
                     if (isHoldingSpeed) {
                         isHoldingSpeed = false;
                         callback.onHoldSpeed(false);
-                        if (holdSpeedToast != null) {
-                            holdSpeedToast.setVisibility(View.GONE);
-                        }
+                        GesturePlaqueAnimationHelper.hide(holdSpeedPlaque);
                     }
 
                     if (isHorizontalSeeking) {
@@ -381,7 +413,7 @@ public class PlayerGestureController {
                         long deltaMs = (long) (finalDx / width * 90000L);
                         long target = Math.max(0, Math.min(callback.getDuration(), seekTargetPosition + deltaMs));
                         callback.onSeekCommit(target);
-                        if (seekPreviewText != null) seekPreviewText.setVisibility(View.GONE);
+                        GesturePlaqueAnimationHelper.hide(seekPreviewPlaque);
                     }
 
                     isTouching = false;
@@ -391,10 +423,8 @@ public class PlayerGestureController {
                     touchStartX = -1f;
                     touchStartY = -1f;
 
-                    hidePlaqueHandler.postDelayed(() -> {
-                        if (gestureIndicatorPlaque != null) gestureIndicatorPlaque.setVisibility(View.GONE);
-                        if (seekPreviewText != null) seekPreviewText.setVisibility(View.GONE);
-                    }, 1000);
+                    hidePlaqueHandler.removeCallbacks(hideGestureIndicatorRunnable);
+                    hidePlaqueHandler.postDelayed(hideGestureIndicatorRunnable, 800);
                     return true;
             }
             return false;
@@ -402,11 +432,29 @@ public class PlayerGestureController {
     }
 
     private void showSeekPreview(long targetPos, long duration, long deltaMs) {
-        if (seekPreviewText == null) return;
-        seekPreviewText.setVisibility(View.VISIBLE);
-        String prefix = deltaMs >= 0 ? "+" : "";
-        seekPreviewText.setText(String.format(Locale.getDefault(), "%s%d с (%s / %s)",
-                prefix, deltaMs / 1000, formatDuration(targetPos), formatDuration(duration)));
+        if (seekPreviewPlaque == null) return;
+        long offsetSec = deltaMs / 1000;
+        String offsetStr = (offsetSec >= 0 ? "+" : "") + offsetSec + " сек";
+        String currentFormatted = formatDuration(targetPos);
+        String durationFormatted = formatDuration(duration);
+
+        if (seekPreviewOffset != null) {
+            seekPreviewOffset.setText(offsetStr);
+        }
+        if (seekPreviewTime != null) {
+            seekPreviewTime.setText(currentFormatted);
+        }
+        if (seekPreviewDuration != null) {
+            seekPreviewDuration.setText(" / " + durationFormatted);
+        }
+        if (seekPreviewIcon != null) {
+            seekPreviewIcon.setRotation(deltaMs >= 0 ? 0f : 180f);
+        }
+        if (seekPreviewPlaque instanceof TextView) {
+            ((TextView) seekPreviewPlaque).setText(String.format(Locale.getDefault(), "%s (%s / %s)",
+                    offsetStr, currentFormatted, durationFormatted));
+        }
+        GesturePlaqueAnimationHelper.show(seekPreviewPlaque);
     }
 
     private void setBrightness(float brightness) {
@@ -428,10 +476,11 @@ public class PlayerGestureController {
 
     private void showGesturePlaque(int iconRes, int percent) {
         if (gestureIndicatorPlaque == null) return;
-        gestureIndicatorPlaque.setVisibility(View.VISIBLE);
+        hidePlaqueHandler.removeCallbacks(hideGestureIndicatorRunnable);
         if (gestureIndicatorIcon != null) gestureIndicatorIcon.setImageResource(iconRes);
-        if (gestureIndicatorProgress != null) gestureIndicatorProgress.setProgress(percent);
+        if (gestureIndicatorProgress != null) gestureIndicatorProgress.setProgress(percent, false);
         if (gestureIndicatorText != null) gestureIndicatorText.setText(percent + "%");
+        GesturePlaqueAnimationHelper.show(gestureIndicatorPlaque);
     }
 
     public void showDoubleTapSkipIndicator(boolean isForward, int seconds) {
@@ -440,13 +489,16 @@ public class PlayerGestureController {
         if (indicator == null || text == null) return;
 
         text.setText((isForward ? "+" : "-") + seconds + " сек");
-        indicator.setVisibility(View.VISIBLE);
-        indicator.setAlpha(0f);
-        indicator.animate().alpha(1f).setDuration(150).withEndAction(() -> {
-            indicator.animate().alpha(0f).setDuration(250).setStartDelay(300).withEndAction(() -> {
-                indicator.setVisibility(View.GONE);
-            }).start();
-        }).start();
+        hidePlaqueHandler.removeCallbacks(isForward ? hideRightSkipRunnable : hideLeftSkipRunnable);
+        GesturePlaqueAnimationHelper.show(indicator);
+
+        Runnable hideRunnable = () -> GesturePlaqueAnimationHelper.hide(indicator);
+        if (isForward) {
+            hideRightSkipRunnable = hideRunnable;
+        } else {
+            hideLeftSkipRunnable = hideRunnable;
+        }
+        hidePlaqueHandler.postDelayed(hideRunnable, 650);
     }
 
     private String formatDuration(long millis) {
